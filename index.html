@@ -556,64 +556,58 @@
         // Чешские буквы для виртуальной клавиатуры
         const czechLetters = 'aábcčdďeéěfghiíjklmnňoópqrřsštťuúůvwxyýzž'.split('');
 
-        // Инициализация
-        async function init() {
-            await loadWords();
-            await loadSettings();
-            await loadLoadedSets();
-            updateMainStats();
-        }
-
-        // Загрузка слов из storage
-        async function loadWords() {
+        // Вспомогательные функции для работы с localStorage
+        function getFromStorage(key) {
             try {
-                const result = await window.storage.get('words');
-                if (result && result.value) {
-                    words = JSON.parse(result.value);
-                }
+                const value = localStorage.getItem(key);
+                return value ? JSON.parse(value) : null;
             } catch (e) {
-                words = [];
+                return null;
             }
         }
 
-        // Сохранение слов
-        async function saveWords() {
+        function saveToStorage(key, value) {
             try {
-                await window.storage.set('words', JSON.stringify(words));
+                localStorage.setItem(key, JSON.stringify(value));
             } catch (e) {
                 console.error('Ошибка сохранения:', e);
             }
         }
 
+        // Инициализация
+        function init() {
+            loadWords();
+            loadSettings();
+            loadLoadedSets();
+            updateMainStats();
+        }
+
+        // Загрузка слов из localStorage
+        function loadWords() {
+            words = getFromStorage('words') || [];
+        }
+
+        // Сохранение слов
+        function saveWords() {
+            saveToStorage('words', words);
+        }
+
         // Загрузка настроек
-        async function loadSettings() {
-            try {
-                const result = await window.storage.get('repoPath');
-                if (result && result.value) {
-                    document.getElementById('repoPath').value = result.value;
-                }
-            } catch (e) {}
+        function loadSettings() {
+            const repoPath = getFromStorage('repoPath');
+            if (repoPath) {
+                document.getElementById('repoPath').value = repoPath;
+            }
         }
 
         // Загрузка списка загруженных наборов
-        async function loadLoadedSets() {
-            try {
-                const result = await window.storage.get('loadedSets');
-                if (result && result.value) {
-                    loadedSets = JSON.parse(result.value);
-                }
-            } catch (e) {
-                loadedSets = [];
-            }
+        function loadLoadedSets() {
+            loadedSets = getFromStorage('loadedSets') || [];
         }
 
         // Сохранение списка загруженных наборов
-        async function saveLoadedSets() {
-            try {
-                await window.storage.set('loadedSets', JSON.stringify(loadedSets));
-            } catch (e) {
-                console.error('Ошибка сохранения списка наборов:', e);
-            }
+        function saveLoadedSets() {
+            saveToStorage('loadedSets', loadedSets);
         }
 
         // Загрузка списка наборов из репозитория
@@ -643,7 +637,7 @@
                     return;
                 }
 
-                await window.storage.set('repoPath', repoPath);
+                saveToStorage('repoPath', repoPath);
                 displaySets(repoPath);
                 
             } catch (e) {
@@ -709,11 +703,11 @@
                     }
                 });
 
-                await saveWords();
+                saveWords();
                 
                 if (!loadedSets.includes(filename)) {
                     loadedSets.push(filename);
-                    await saveLoadedSets();
+                    saveLoadedSets();
                 }
 
                 displaySets(repoPath);
@@ -733,7 +727,7 @@
         }
 
         // Добавление слова вручную
-        async function addWord() {
+        function addWord() {
             const cs = document.getElementById('newWordCs').value.trim();
             const ru = document.getElementById('newWordRu').value.trim();
 
@@ -751,7 +745,7 @@
                 setName: 'Локальные слова'
             });
 
-            await saveWords();
+            saveWords();
             
             document.getElementById('newWordCs').value = '';
             document.getElementById('newWordRu').value = '';
@@ -773,7 +767,7 @@
         }
 
         // Сброс статистики
-        async function resetStats() {
+        function resetStats() {
             if (!confirm('Сбросить всю статистику обучения?')) return;
             
             words.forEach(w => {
@@ -782,7 +776,7 @@
                 w.lastReview = null;
             });
             
-            await saveWords();
+            saveWords();
             updateStatsScreen();
             alert('Статистика сброшена');
         }
@@ -832,10 +826,10 @@
         }
 
         // Удаление слова
-        async function deleteWord(index) {
+        function deleteWord(index) {
             if (!confirm('Удалить это слово?')) return;
             words.splice(index, 1);
-            await saveWords();
+            saveWords();
             updateStatsScreen();
         }
 
@@ -1006,7 +1000,7 @@
         }
 
         // Обработка ответа
-        async function handleAnswer(isCorrect) {
+        function handleAnswer(isCorrect) {
             if (isCorrect) {
                 sessionStats.correct++;
                 currentQuestion.answered = true;
@@ -1023,7 +1017,7 @@
                 wordInBase.lastReview = new Date().toISOString();
             }
 
-            await saveWords();
+            saveWords();
 
             setTimeout(() => {
                 showNextQuestion();
