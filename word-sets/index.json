@@ -17,6 +17,12 @@
       "file": "set3-transport.json",
       "level": "beginner",
       "words": 30
+    },
+    {
+      "name": "Набор 4: Тест",
+      "file": "Test.json",
+      "level": "beginner",
+      "words": 50
     }
   ]
 }
