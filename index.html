@@ -96,7 +96,7 @@
             font-weight: 600;
         }
 
-        .input-group input, .input-group textarea {
+        .input-group input, .input-group textarea, .input-group select {
             width: 100%;
             padding: 12px;
             border: 2px solid #e0e0e0;
@@ -105,7 +105,7 @@
             transition: border-color 0.3s;
         }
 
-        .input-group input:focus, .input-group textarea:focus {
+        .input-group input:focus, .input-group textarea:focus, .input-group select:focus {
             outline: none;
             border-color: #667eea;
         }
@@ -163,6 +163,7 @@
         .options {
             display: grid;
             gap: 15px;
+            margin-bottom: 20px;
         }
 
         .option-btn {
@@ -292,6 +293,7 @@
             border-radius: 15px;
             overflow: hidden;
             margin-bottom: 20px;
+            position: relative;
         }
 
         .progress-fill {
@@ -303,6 +305,24 @@
             justify-content: center;
             color: white;
             font-weight: bold;
+            min-width: 0;
+        }
+
+        .progress-text {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-weight: bold;
+            transition: color 0.3s;
+        }
+
+        .progress-text.dark {
+            color: #333;
+        }
+
+        .progress-text.light {
+            color: white;
         }
 
         .back-btn {
@@ -334,8 +354,21 @@
             }
 
             .stats {
-                flex-direction: column;
-                gap: 15px;
+                flex-direction: row;
+                gap: 10px;
+                padding: 15px 10px;
+            }
+
+            .stat-item {
+                flex: 1;
+            }
+
+            .stat-value {
+                font-size: 1.5em;
+            }
+
+            .stat-label {
+                font-size: 0.75em;
             }
         }
 
@@ -404,6 +437,12 @@
             margin-bottom: 15px;
         }
 
+        .set-card-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
         .set-card-loaded {
             background: #e8f5e9;
             border-color: #4caf50;
@@ -412,6 +451,59 @@
         .loading {
             text-align: center;
             padding: 20px;
+            color: #666;
+        }
+
+        .word-preview {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 15px;
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+        }
+
+        .word-preview-item {
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+            font-size: 0.9em;
+        }
+
+        .word-preview-item:last-child {
+            border-bottom: none;
+        }
+
+        .set-selector {
+            margin-bottom: 20px;
+        }
+
+        .set-option {
+            padding: 15px;
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .set-option:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .set-option.selected {
+            border-color: #667eea;
+            background: #e3f2fd;
+        }
+
+        .set-option-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .set-option-info {
+            font-size: 0.9em;
             color: #666;
         }
     </style>
@@ -423,11 +515,21 @@
             <h1>🇨🇿 Изучение чешского</h1>
             <p class="subtitle">Твой помощник в освоении чешского языка</p>
             
-            <button class="button" onclick="startSession()">Начать сессию обучения</button>
+            <button class="button" onclick="showSetSelector()">Начать сессию обучения</button>
             <button class="button secondary" onclick="showScreen('setsScreen')">Наборы слов</button>
             <button class="button secondary" onclick="showScreen('statsScreen')">Статистика</button>
             
             <div id="mainStats" style="margin-top: 30px;"></div>
+        </div>
+
+        <!-- Экран выбора набора -->
+        <div id="setSelectorScreen" class="screen">
+            <button class="button back-btn" onclick="showScreen('mainScreen')">← Назад</button>
+            <h2>Выбери набор для изучения</h2>
+            
+            <div class="set-selector" id="setSelector"></div>
+            
+            <button class="button" onclick="startSessionWithSelected()" id="startSelectedBtn" disabled>Начать сессию</button>
         </div>
 
         <!-- Экран наборов слов -->
@@ -496,7 +598,8 @@
         <!-- Экран обучения -->
         <div id="learningScreen" class="screen">
             <div class="progress-bar">
-                <div class="progress-fill" id="progressBar">0%</div>
+                <div class="progress-fill" id="progressBar"></div>
+                <div class="progress-text dark" id="progressText">0%</div>
             </div>
 
             <div class="stats" style="margin-bottom: 20px;">
@@ -538,7 +641,7 @@
                 </div>
             </div>
 
-            <button class="button" onclick="startSession()">Начать новую сессию</button>
+            <button class="button" onclick="showSetSelector()">Начать новую сессию</button>
             <button class="button secondary" onclick="showScreen('setsScreen')">Выбрать другой набор</button>
             <button class="button secondary" onclick="showScreen('mainScreen')">На главную</button>
         </div>
@@ -553,6 +656,7 @@
         let currentQuestion = null;
         let availableSets = [];
         let loadedSets = [];
+        let selectedSet = null;
 
         // Чешские буквы для виртуальной клавиатуры
         const czechLetters = 'aábcčdďeéěfghiíjklmnňoópqrřsštťuúůvwxyýzž'.split('');
@@ -665,13 +769,35 @@
                         📚 ${set.words || '?'} слов
                         ${isLoaded ? '<br>✅ Загружено' : ''}
                     </div>
-                    ${!isLoaded ? 
-                        `<button class="button small" onclick="loadSet('${repoPath}', '${set.file}', '${set.name}')">Загрузить набор</button>` :
-                        `<button class="button small secondary" onclick="reloadSet('${repoPath}', '${set.file}', '${set.name}')">Перезагрузить</button>`
-                    }
+                    <div class="set-card-actions">
+                        ${!isLoaded ? 
+                            `<button class="button small" onclick="loadSet('${repoPath}', '${set.file}', '${set.name}')">Загрузить набор</button>` :
+                            `<button class="button small secondary" onclick="reloadSet('${repoPath}', '${set.file}', '${set.name}')">Перезагрузить</button>`
+                        }
+                        ${isLoaded ? 
+                            `<button class="button small" onclick="viewSetWords('${set.name}')">Просмотр слов</button>` : ''
+                        }
+                    </div>
+                    <div id="preview-${set.name.replace(/\s/g, '-')}" class="word-preview" style="display: none;"></div>
                 `;
                 container.appendChild(setCard);
             });
+        }
+
+        // Просмотр слов набора
+        function viewSetWords(setName) {
+            const previewId = 'preview-' + setName.replace(/\s/g, '-');
+            const preview = document.getElementById(previewId);
+            
+            if (preview.style.display === 'none') {
+                const setWords = words.filter(w => w.setName === setName);
+                preview.innerHTML = setWords.map(w => 
+                    `<div class="word-preview-item"><strong>${w.cs}</strong> — ${w.ru}</div>`
+                ).join('');
+                preview.style.display = 'block';
+            } else {
+                preview.style.display = 'none';
+            }
         }
 
         // Загрузка набора слов
@@ -713,6 +839,7 @@
 
                 displaySets(repoPath);
                 updateMainStats();
+                alert(`Добавлено слов: ${addedCount}`);
             } catch (e) {
                 alert('Ошибка загрузки набора: ' + e.message);
             }
@@ -833,19 +960,81 @@
             updateStatsScreen();
         }
 
-        // Начало сессии
-        function startSession() {
+        // Показ селектора наборов
+        function showSetSelector() {
             if (words.length === 0) {
                 alert('Сначала добавь слова в базу!');
                 showScreen('setsScreen');
                 return;
             }
 
-            const sessionSize = Math.min(15, words.length);
-            sessionWords = [...words]
-                .sort(() => Math.random() - 0.5)
-                .slice(0, sessionSize)
-                .map(w => ({ ...w, answered: false }));
+            showScreen('setSelectorScreen');
+            displaySetSelector();
+        }
+
+        // Отображение селектора наборов
+        function displaySetSelector() {
+            const container = document.getElementById('setSelector');
+            const setNames = [...new Set(words.map(w => w.setName).filter(n => n))];
+            
+            container.innerHTML = '';
+
+            // Опция со случайными словами
+            const randomOption = document.createElement('div');
+            randomOption.className = 'set-option';
+            randomOption.onclick = () => selectSetOption(randomOption, null);
+            randomOption.innerHTML = `
+                <div class="set-option-title">🎲 Случайные слова</div>
+                <div class="set-option-info">15-20 слов из всех наборов</div>
+            `;
+            container.appendChild(randomOption);
+
+            // Опции конкретных наборов
+            setNames.forEach(setName => {
+                const setWords = words.filter(w => w.setName === setName);
+                const option = document.createElement('div');
+                option.className = 'set-option';
+                option.onclick = () => selectSetOption(option, setName);
+                option.innerHTML = `
+                    <div class="set-option-title">${setName}</div>
+                    <div class="set-option-info">📚 ${setWords.length} слов</div>
+                `;
+                container.appendChild(option);
+            });
+        }
+
+        // Выбор набора
+        function selectSetOption(element, setName) {
+            document.querySelectorAll('.set-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            element.classList.add('selected');
+            selectedSet = setName;
+            document.getElementById('startSelectedBtn').disabled = false;
+        }
+
+        // Начало сессии с выбранным набором
+        function startSessionWithSelected() {
+            if (selectedSet === null) {
+                // Случайные слова из всех наборов
+                const sessionSize = Math.min(20, words.length);
+                sessionWords = [...words]
+                    .sort(() => Math.random() - 0.5)
+                    .slice(0, sessionSize)
+                    .map(w => ({ ...w, answered: false }));
+            } else {
+                // Слова из конкретного набора
+                const setWords = words.filter(w => w.setName === selectedSet);
+                if (setWords.length === 0) {
+                    alert('В этом наборе нет слов!');
+                    return;
+                }
+                const sessionSize = Math.min(15, setWords.length);
+                sessionWords = [...setWords]
+                    .sort(() => Math.random() - 0.5)
+                    .slice(0, sessionSize)
+                    .map(w => ({ ...w, answered: false }));
+            }
 
             currentWordIndex = 0;
             sessionStats = { correct: 0, incorrect: 0 };
@@ -966,16 +1155,22 @@
                 <div class="constructed-word" id="constructedWord">${template}</div>
                 <div class="letter-buttons" id="letterButtons"></div>
                 <button class="button secondary" onclick="deleteLastLetter()" style="width: auto; display: inline-block; margin-right: 10px;">⌫ Стереть букву</button>
-                <button class="button secondary" onclick="clearConstruction()" style="width: auto; display: inline-block;">Очистить всё</button>
                 <button class="button" onclick="checkConstruction()">Проверить</button>
             `;
 
             const letterButtons = document.getElementById('letterButtons');
+            
+            // Находим первую букву оригинального слова
+            const firstLetterOriginal = correctWord[0];
+            const firstLetterLower = firstLetterOriginal.toLowerCase();
+            
             allLetters.forEach((letter, index) => {
                 const btn = document.createElement('button');
                 btn.className = 'letter-btn';
-                // Сохраняем регистр первой буквы если нужно
-                const displayLetter = (index === 0 && correctWord[0] === correctWord[0].toUpperCase()) ? letter.toUpperCase() : letter;
+                // Делаем заглавной только ту букву, которая является первой в оригинале
+                const displayLetter = (letter === firstLetterLower && firstLetterOriginal === firstLetterOriginal.toUpperCase()) 
+                    ? letter.toUpperCase() 
+                    : letter;
                 btn.textContent = displayLetter;
                 btn.dataset.index = index;
                 btn.dataset.letter = letter;
@@ -1037,13 +1232,6 @@
             
             const btn = document.querySelector(`[data-index="${lastLetter.index}"]`);
             if (btn) btn.disabled = false;
-        }
-
-        // Очистка конструкции
-        function clearConstruction() {
-            window.constructedLetters = [];
-            updateConstructedWord();
-            document.querySelectorAll('.letter-btn').forEach(btn => btn.disabled = false);
         }
 
         // Проверка составленного слова
@@ -1116,8 +1304,19 @@
 
             const progress = (answered / total) * 100;
             const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            
             progressBar.style.width = progress + '%';
-            progressBar.textContent = Math.round(progress) + '%';
+            progressText.textContent = Math.round(progress) + '%';
+            
+            // Меняем цвет текста в зависимости от прогресса
+            if (progress > 0) {
+                progressText.classList.remove('dark');
+                progressText.classList.add('light');
+            } else {
+                progressText.classList.remove('light');
+                progressText.classList.add('dark');
+            }
         }
 
         // Показ результатов
