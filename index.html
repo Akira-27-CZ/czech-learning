@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Изучение чешского языка</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        .button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+            margin-bottom: 15px;
+        }
+
+        .button:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .button.secondary {
+            background: #764ba2;
+        }
+
+        .button.secondary:hover {
+            background: #663d91;
+        }
+
+        .button.small {
+            padding: 10px 20px;
+            font-size: 0.9em;
+            width: auto;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .input-group input, .input-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        .input-group input:focus, .input-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .input-group textarea {
+            resize: vertical;
+            min-height: 100px;
+            font-family: monospace;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .question-card {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .question-text {
+            font-size: 1.8em;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .question-type {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 20px;
+        }
+
+        .options {
+            display: grid;
+            gap: 15px;
+        }
+
+        .option-btn {
+            padding: 15px;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: all 0.3s;
+        }
+
+        .option-btn:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .option-btn.correct {
+            background: #4caf50;
+            color: white;
+            border-color: #4caf50;
+        }
+
+        .option-btn.incorrect {
+            background: #f44336;
+            color: white;
+            border-color: #f44336;
+        }
+
+        .letter-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .letter-btn {
+            padding: 12px 18px;
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.2em;
+            min-width: 50px;
+            transition: all 0.3s;
+        }
+
+        .letter-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .letter-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .constructed-word {
+            font-size: 2em;
+            padding: 20px;
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            min-height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .feedback {
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.1em;
+        }
+
+        .feedback.correct {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .feedback.incorrect {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .word-list {
+            margin-top: 20px;
+        }
+
+        .word-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .word-item-text {
+            flex: 1;
+        }
+
+        .word-item-stats {
+            font-size: 0.9em;
+            color: #666;
+            margin-right: 15px;
+        }
+
+        .delete-btn {
+            background: #f44336;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: #e0e0e0;
+            border-radius: 15px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .back-btn {
+            background: #999;
+            margin-bottom: 20px;
+        }
+
+        .back-btn:hover {
+            background: #777;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 1.5em;
+            }
+
+            .question-text {
+                font-size: 1.4em;
+            }
+
+            .letter-btn {
+                padding: 10px 14px;
+                font-size: 1em;
+                min-width: 40px;
+            }
+
+            .stats {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+
+        .error-box {
+            background: #ffebee;
+            border-left: 4px solid #f44336;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+
+        .success-box {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+
+        .set-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border: 2px solid #e0e0e0;
+            transition: all 0.3s;
+        }
+
+        .set-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+        }
+
+        .set-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .set-card-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .set-card-badge {
+            padding: 5px 12px;
+            background: #667eea;
+            color: white;
+            border-radius: 20px;
+            font-size: 0.8em;
+        }
+
+        .set-card-info {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 15px;
+        }
+
+        .set-card-loaded {
+            background: #e8f5e9;
+            border-color: #4caf50;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Главный экран -->
+        <div id="mainScreen" class="screen active">
+            <h1>🇨🇿 Изучение чешского</h1>
+            <p class="subtitle">Твой помощник в освоении чешского языка</p>
+            
+            <button class="button" onclick="startSession()">Начать сессию обучения</button>
+            <button class="button secondary" onclick="showScreen('setsScreen')">Наборы слов</button>
+            <button class="button secondary" onclick="showScreen('statsScreen')">Статистика</button>
+            
+            <div id="mainStats" style="margin-top: 30px;"></div>
+        </div>
+
+        <!-- Экран наборов слов -->
+        <div id="setsScreen" class="screen">
+            <button class="button back-btn" onclick="showScreen('mainScreen')">← Назад</button>
+            <h2>Наборы слов</h2>
+            
+            <div class="input-group">
+                <label>Путь к репозиторию GitHub</label>
+                <input type="text" id="repoPath" placeholder="username/repository-name">
+                <small style="color: #666; display: block; margin-top: 5px;">
+                    Например: <code>ivanov/czech-learning</code>
+                </small>
+            </div>
+
+            <button class="button" onclick="loadSetsFromRepo()">Загрузить список наборов</button>
+
+            <div class="info-box" style="margin-top: 20px;">
+                <strong>💡 Как это работает:</strong><br>
+                1. Создай папку <code>word-sets/</code> в своём репозитории<br>
+                2. Загрузи туда файлы с наборами слов<br>
+                3. Создай файл <code>word-sets/index.json</code> со списком наборов<br>
+                4. Укажи путь к репозиторию выше
+            </div>
+
+            <hr style="margin: 30px 0;">
+
+            <div id="setsContainer"></div>
+
+            <hr style="margin: 30px 0;">
+
+            <h3>Добавить слова вручную</h3>
+            <div class="input-group">
+                <label>Чешское слово/фраза</label>
+                <input type="text" id="newWordCs" placeholder="Dobrý den">
+            </div>
+            <div class="input-group">
+                <label>Русский перевод</label>
+                <input type="text" id="newWordRu" placeholder="Добрый день">
+            </div>
+            <button class="button" onclick="addWord()">Добавить слово</button>
+        </div>
+
+        <!-- Экран статистики -->
+        <div id="statsScreen" class="screen">
+            <button class="button back-btn" onclick="showScreen('mainScreen')">← Назад</button>
+            <h2>Статистика и управление словами</h2>
+            
+            <div class="stats">
+                <div class="stat-item">
+                    <div class="stat-value" id="totalWords">0</div>
+                    <div class="stat-label">Всего слов</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="learnedWords">0</div>
+                    <div class="stat-label">Изучено</div>
+                </div>
+            </div>
+
+            <button class="button secondary" onclick="exportWords()">Экспортировать все слова (JSON)</button>
+            <button class="button" onclick="resetStats()" style="background: #ff9800;">Сбросить статистику</button>
+
+            <div id="wordListContainer" class="word-list"></div>
+        </div>
+
+        <!-- Экран обучения -->
+        <div id="learningScreen" class="screen">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressBar">0%</div>
+            </div>
+
+            <div class="stats" style="margin-bottom: 20px;">
+                <div class="stat-item">
+                    <div class="stat-value" id="sessionCorrect">0</div>
+                    <div class="stat-label">Правильно</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="sessionIncorrect">0</div>
+                    <div class="stat-label">Ошибок</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="sessionRemaining">0</div>
+                    <div class="stat-label">Осталось</div>
+                </div>
+            </div>
+
+            <div id="questionContainer"></div>
+
+            <button class="button back-btn" onclick="endSession()">Завершить сессию</button>
+        </div>
+
+        <!-- Экран результатов -->
+        <div id="resultsScreen" class="screen">
+            <h2>🎉 Сессия завершена!</h2>
+            
+            <div class="stats" style="margin: 30px 0;">
+                <div class="stat-item">
+                    <div class="stat-value" id="finalCorrect">0</div>
+                    <div class="stat-label">Правильно</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="finalIncorrect">0</div>
+                    <div class="stat-label">Ошибок</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="finalAccuracy">0%</div>
+                    <div class="stat-label">Точность</div>
+                </div>
+            </div>
+
+            <button class="button" onclick="showScreen('mainScreen')">Вернуться на главную</button>
+            <button class="button secondary" onclick="startSession()">Начать новую сессию</button>
+        </div>
+    </div>
+
+    <script>
+        // Глобальные переменные
+        let words = [];
+        let sessionWords = [];
+        let currentWordIndex = 0;
+        let sessionStats = { correct: 0, incorrect: 0 };
+        let currentQuestion = null;
+        let availableSets = [];
+        let loadedSets = [];
+
+        // Чешские буквы для виртуальной клавиатуры
+        const czechLetters = 'aábcčdďeéěfghiíjklmnňoópqrřsštťuúůvwxyýzž'.split('');
+
+        // Инициализация
+        async function init() {
+            await loadWords();
+            await loadSettings();
+            await loadLoadedSets();
+            updateMainStats();
+        }
+
+        // Загрузка слов из storage
+        async function loadWords() {
+            try {
+                const result = await window.storage.get('words');
+                if (result && result.value) {
+                    words = JSON.parse(result.value);
+                }
+            } catch (e) {
+                words = [];
+            }
+        }
+
+        // Сохранение слов
+        async function saveWords() {
+            try {
+                await window.storage.set('words', JSON.stringify(words));
+            } catch (e) {
+                console.error('Ошибка сохранения:', e);
+            }
+        }
+
+        // Загрузка настроек
+        async function loadSettings() {
+            try {
+                const result = await window.storage.get('repoPath');
+                if (result && result.value) {
+                    document.getElementById('repoPath').value = result.value;
+                }
+            } catch (e) {}
+        }
+
+        // Загрузка списка загруженных наборов
+        async function loadLoadedSets() {
+            try {
+                const result = await window.storage.get('loadedSets');
+                if (result && result.value) {
+                    loadedSets = JSON.parse(result.value);
+                }
+            } catch (e) {
+                loadedSets = [];
+            }
+        }
+
+        // Сохранение списка загруженных наборов
+        async function saveLoadedSets() {
+            try {
+                await window.storage.set('loadedSets', JSON.stringify(loadedSets));
+            } catch (e) {
+                console.error('Ошибка сохранения списка наборов:', e);
+            }
+        }
+
+        // Загрузка списка наборов из репозитория
+        async function loadSetsFromRepo() {
+            const repoPath = document.getElementById('repoPath').value.trim();
+            if (!repoPath) {
+                alert('Введи путь к репозиторию (например: username/repo-name)');
+                return;
+            }
+
+            const container = document.getElementById('setsContainer');
+            container.innerHTML = '<div class="loading">⏳ Загрузка списка наборов...</div>';
+
+            try {
+                const indexUrl = `https://raw.githubusercontent.com/${repoPath}/main/word-sets/index.json`;
+                const response = await fetch(indexUrl);
+                
+                if (!response.ok) {
+                    throw new Error('Не удалось загрузить index.json. Убедись, что файл существует в папке word-sets/');
+                }
+                
+                const data = await response.json();
+                availableSets = data.sets || [];
+
+                if (availableSets.length === 0) {
+                    container.innerHTML = '<div class="error-box">Наборы не найдены</div>';
+                    return;
+                }
+
+                await window.storage.set('repoPath', repoPath);
+                displaySets(repoPath);
+                
+            } catch (e) {
+                container.innerHTML = `<div class="error-box">Ошибка загрузки: ${e.message}</div>`;
+            }
+        }
+
+        // Отображение списка наборов
+        function displaySets(repoPath) {
+            const container = document.getElementById('setsContainer');
+            container.innerHTML = '<h3>Доступные наборы</h3>';
+
+            availableSets.forEach(set => {
+                const isLoaded = loadedSets.includes(set.file);
+                
+                const setCard = document.createElement('div');
+                setCard.className = `set-card ${isLoaded ? 'set-card-loaded' : ''}`;
+                setCard.innerHTML = `
+                    <div class="set-card-header">
+                        <div class="set-card-title">${set.name}</div>
+                        <div class="set-card-badge">${set.level || 'beginner'}</div>
+                    </div>
+                    <div class="set-card-info">
+                        📚 ${set.words || '?'} слов
+                        ${isLoaded ? '<br>✅ Загружено' : ''}
+                    </div>
+                    ${!isLoaded ? 
+                        `<button class="button small" onclick="loadSet('${repoPath}', '${set.file}', '${set.name}')">Загрузить набор</button>` :
+                        `<button class="button small secondary" onclick="reloadSet('${repoPath}', '${set.file}', '${set.name}')">Перезагрузить</button>`
+                    }
+                `;
+                container.appendChild(setCard);
+            });
+        }
+
+        // Загрузка набора слов
+        async function loadSet(repoPath, filename, setName) {
+            try {
+                const url = `https://raw.githubusercontent.com/${repoPath}/main/word-sets/${filename}`;
+                const response = await fetch(url);
+                
+                if (!response.ok) throw new Error('Не удалось загрузить набор');
+                
+                const newWords = await response.json();
+
+                if (!Array.isArray(newWords)) {
+                    throw new Error('Неверный формат файла');
+                }
+
+                // Добавление новых слов
+                let addedCount = 0;
+                newWords.forEach(word => {
+                    if (!words.find(w => w.cs === word.cs && w.ru === word.ru)) {
+                        words.push({
+                            cs: word.cs,
+                            ru: word.ru,
+                            correct: 0,
+                            incorrect: 0,
+                            lastReview: null,
+                            setName: setName
+                        });
+                        addedCount++;
+                    }
+                });
+
+                await saveWords();
+                
+                if (!loadedSets.includes(filename)) {
+                    loadedSets.push(filename);
+                    await saveLoadedSets();
+                }
+
+                displaySets(repoPath);
+                alert(`✅ Загружено ${addedCount} новых слов из набора "${setName}"!`);
+                updateMainStats();
+            } catch (e) {
+                alert('Ошибка загрузки набора: ' + e.message);
+            }
+        }
+
+        // Перезагрузка набора
+        async function reloadSet(repoPath, filename, setName) {
+            if (!confirm(`Перезагрузить набор "${setName}"? Статистика по этим словам сохранится.`)) {
+                return;
+            }
+            await loadSet(repoPath, filename, setName);
+        }
+
+        // Добавление слова вручную
+        async function addWord() {
+            const cs = document.getElementById('newWordCs').value.trim();
+            const ru = document.getElementById('newWordRu').value.trim();
+
+            if (!cs || !ru) {
+                alert('Заполни оба поля');
+                return;
+            }
+
+            words.push({
+                cs: cs,
+                ru: ru,
+                correct: 0,
+                incorrect: 0,
+                lastReview: null,
+                setName: 'Локальные слова'
+            });
+
+            await saveWords();
+            
+            document.getElementById('newWordCs').value = '';
+            document.getElementById('newWordRu').value = '';
+            
+            alert('Слово добавлено!');
+        }
+
+        // Экспорт слов
+        function exportWords() {
+            const exportData = words.map(w => ({ cs: w.cs, ru: w.ru }));
+            const json = JSON.stringify(exportData, null, 2);
+            
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'czech-words.json';
+            a.click();
+        }
+
+        // Сброс статистики
+        async function resetStats() {
+            if (!confirm('Сбросить всю статистику обучения?')) return;
+            
+            words.forEach(w => {
+                w.correct = 0;
+                w.incorrect = 0;
+                w.lastReview = null;
+            });
+            
+            await saveWords();
+            updateStatsScreen();
+            alert('Статистика сброшена');
+        }
+
+        // Обновление главной статистики
+        function updateMainStats() {
+            const total = words.length;
+            const learned = words.filter(w => w.correct > 0).length;
+            
+            document.getElementById('mainStats').innerHTML = `
+                <div class="stats">
+                    <div class="stat-item">
+                        <div class="stat-value">${total}</div>
+                        <div class="stat-label">Слов в базе</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">${learned}</div>
+                        <div class="stat-label">Изучено</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Обновление экрана статистики
+        function updateStatsScreen() {
+            document.getElementById('totalWords').textContent = words.length;
+            document.getElementById('learnedWords').textContent = words.filter(w => w.correct > 0).length;
+
+            const container = document.getElementById('wordListContainer');
+            container.innerHTML = '<h3>Список слов</h3>';
+            
+            words.forEach((word, index) => {
+                const div = document.createElement('div');
+                div.className = 'word-item';
+                div.innerHTML = `
+                    <div class="word-item-text">
+                        <strong>${word.cs}</strong> — ${word.ru}
+                        ${word.setName ? `<br><small style="color: #999;">${word.setName}</small>` : ''}
+                    </div>
+                    <div class="word-item-stats">
+                        ✓${word.correct} ✗${word.incorrect}
+                    </div>
+                    <button class="delete-btn" onclick="deleteWord(${index})">Удалить</button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // Удаление слова
+        async function deleteWord(index) {
+            if (!confirm('Удалить это слово?')) return;
+            words.splice(index, 1);
+            await saveWords();
+            updateStatsScreen();
+        }
+
+        // Начало сессии
+        function startSession() {
+            if (words.length === 0) {
+                alert('Сначала добавь слова в базу!');
+                showScreen('setsScreen');
+                return;
+            }
+
+            const sessionSize = Math.min(15, words.length);
+            sessionWords = [...words]
+                .sort(() => Math.random() - 0.5)
+                .slice(0, sessionSize)
+                .map(w => ({ ...w, answered: false }));
+
+            currentWordIndex = 0;
+            sessionStats = { correct: 0, incorrect: 0 };
+
+            showScreen('learningScreen');
+            showNextQuestion();
+        }
+
+        // Показ следующего вопроса
+        function showNextQuestion() {
+            const unanswered = sessionWords.filter(w => !w.answered);
+            
+            if (unanswered.length === 0) {
+                showResults();
+                return;
+            }
+
+            currentQuestion = unanswered[0];
+            const questionType = Math.random() < 0.5 ? 'csToRu' : 'ruToCs';
+            
+            updateSessionStats();
+            
+            if (questionType === 'csToRu') {
+                showMultipleChoice();
+            } else {
+                showLetterConstruction();
+            }
+        }
+
+        // Вопрос с множественным выбором
+        function showMultipleChoice() {
+            const correctAnswer = currentQuestion.ru;
+            const wrongAnswers = words
+                .filter(w => w.ru !== correctAnswer)
+                .sort(() => Math.random() - 0.5)
+                .slice(0, 3)
+                .map(w => w.ru);
+            
+            const allAnswers = [correctAnswer, ...wrongAnswers].sort(() => Math.random() - 0.5);
+
+            const container = document.getElementById('questionContainer');
+            container.innerHTML = `
+                <div class="question-card">
+                    <div class="question-type">Переведи с чешского</div>
+                    <div class="question-text">${currentQuestion.cs}</div>
+                </div>
+                <div class="options" id="options"></div>
+            `;
+
+            const optionsDiv = document.getElementById('options');
+            allAnswers.forEach(answer => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.textContent = answer;
+                btn.onclick = () => checkMultipleChoice(answer, correctAnswer);
+                optionsDiv.appendChild(btn);
+            });
+        }
+
+        // Проверка множественного выбора
+        function checkMultipleChoice(selected, correct) {
+            const buttons = document.querySelectorAll('.option-btn');
+            buttons.forEach(btn => {
+                btn.disabled = true;
+                if (btn.textContent === correct) {
+                    btn.classList.add('correct');
+                }
+                if (btn.textContent === selected && selected !== correct) {
+                    btn.classList.add('incorrect');
+                }
+            });
+
+            const isCorrect = selected === correct;
+            handleAnswer(isCorrect);
+        }
+
+        // Составление слова из букв
+        function showLetterConstruction() {
+            const correctWord = currentQuestion.cs.toLowerCase();
+            const letters = correctWord.split('');
+            
+            const extraLetters = czechLetters
+                .filter(l => !letters.includes(l))
+                .sort(() => Math.random() - 0.5)
+                .slice(0, 5);
+            
+            const allLetters = [...letters, ...extraLetters].sort(() => Math.random() - 0.5);
+
+            const container = document.getElementById('questionContainer');
+            container.innerHTML = `
+                <div class="question-card">
+                    <div class="question-type">Составь слово на чешском</div>
+                    <div class="question-text">${currentQuestion.ru}</div>
+                </div>
+                <div class="constructed-word" id="constructedWord"></div>
+                <div class="letter-buttons" id="letterButtons"></div>
+                <button class="button" onclick="checkConstruction()">Проверить</button>
+                <button class="button secondary" onclick="clearConstruction()">Очистить</button>
+            `;
+
+            const letterButtons = document.getElementById('letterButtons');
+            allLetters.forEach((letter, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'letter-btn';
+                btn.textContent = letter;
+                btn.dataset.index = index;
+                btn.onclick = () => addLetter(letter, index);
+                letterButtons.appendChild(btn);
+            });
+
+            window.constructedLetters = [];
+        }
+
+        // Добавление буквы
+        function addLetter(letter, index) {
+            window.constructedLetters.push({ letter, index });
+            document.getElementById('constructedWord').textContent = 
+                window.constructedLetters.map(l => l.letter).join('');
+            
+            const btn = document.querySelector(`[data-index="${index}"]`);
+            btn.disabled = true;
+        }
+
+        // Очистка конструкции
+        function clearConstruction() {
+            window.constructedLetters = [];
+            document.getElementById('constructedWord').textContent = '';
+            document.querySelectorAll('.letter-btn').forEach(btn => btn.disabled = false);
+        }
+
+        // Проверка составленного слова
+        function checkConstruction() {
+            const constructed = window.constructedLetters.map(l => l.letter).join('');
+            const correct = currentQuestion.cs.toLowerCase();
+            const isCorrect = constructed === correct;
+
+            const feedback = document.createElement('div');
+            feedback.className = `feedback ${isCorrect ? 'correct' : 'incorrect'}`;
+            feedback.textContent = isCorrect 
+                ? '✓ Правильно!' 
+                : `✗ Неправильно. Правильный ответ: ${currentQuestion.cs}`;
+            
+            document.getElementById('questionContainer').insertBefore(
+                feedback, 
+                document.getElementById('questionContainer').firstChild
+            );
+
+            document.querySelectorAll('.letter-btn').forEach(btn => btn.disabled = true);
+            document.querySelector('button.button').disabled = true;
+
+            setTimeout(() => handleAnswer(isCorrect), 2000);
+        }
+
+        // Обработка ответа
+        async function handleAnswer(isCorrect) {
+            if (isCorrect) {
+                sessionStats.correct++;
+                currentQuestion.answered = true;
+                currentQuestion.correct++;
+            } else {
+                sessionStats.incorrect++;
+                currentQuestion.incorrect++;
+            }
+
+            const wordInBase = words.find(w => w.cs === currentQuestion.cs && w.ru === currentQuestion.ru);
+            if (wordInBase) {
+                wordInBase.correct = currentQuestion.correct;
+                wordInBase.incorrect = currentQuestion.incorrect;
+                wordInBase.lastReview = new Date().toISOString();
+            }
+
+            await saveWords();
+
+            setTimeout(() => {
+                showNextQuestion();
+            }, isCorrect ? 500 : 2000);
+        }
+
+        // Обновление статистики сессии
+        function updateSessionStats() {
+            const answered = sessionWords.filter(w => w.answered).length;
+            const total = sessionWords.length;
+            const remaining = sessionWords.filter(w => !w.answered).length;
+
+            document.getElementById('sessionCorrect').textContent = sessionStats.correct;
+            document.getElementById('sessionIncorrect').textContent = sessionStats.incorrect;
+            document.getElementById('sessionRemaining').textContent = remaining;
+
+            const progress = (answered / total) * 100;
+            const progressBar = document.getElementById('progressBar');
+            progressBar.style.width = progress + '%';
+            progressBar.textContent = Math.round(progress) + '%';
+        }
+
+        // Показ результатов
+        function showResults() {
+            const total = sessionStats.correct + sessionStats.incorrect;
+            const accuracy = total > 0 ? Math.round((sessionStats.correct / total) * 100) : 0;
+
+            document.getElementById('finalCorrect').textContent = sessionStats.correct;
+            document.getElementById('finalIncorrect').textContent = sessionStats.incorrect;
+            document.getElementById('finalAccuracy').textContent = accuracy + '%';
+
+            showScreen('resultsScreen');
+        }
+
+        // Завершение сессии
+        function endSession() {
+            if (confirm('Завершить сессию? Прогресс будет сохранен.')) {
+                showScreen('mainScreen');
+                updateMainStats();
+            }
+        }
+
+        // Переключение экранов
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            document.getElementById(screenId).classList.add('active');
+
+            if (screenId === 'statsScreen') {
+                updateStatsScreen();
+            }
+            if (screenId === 'mainScreen') {
+                updateMainStats();
+            }
+        }
+
+        // Инициализация при загрузке
+        init();
+    </script>
+</body>
+</html>
