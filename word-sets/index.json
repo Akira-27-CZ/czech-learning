@@ -1,0 +1,22 @@
+{
+  "sets": [
+    {
+      "name": "Набор 1: Базовые фразы и приветствия",
+      "file": "set1-basics.json",
+      "level": "beginner",
+      "words": 30
+    },
+    {
+      "name": "Набор 2: Еда и напитки",
+      "file": "set2-food.json",
+      "level": "beginner",
+      "words": 35
+    },
+    {
+      "name": "Набор 3: Транспорт и город",
+      "file": "set3-transport.json",
+      "level": "beginner",
+      "words": 30
+    }
+  ]
+}
