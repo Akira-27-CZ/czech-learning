@@ -538,8 +538,9 @@
                 </div>
             </div>
 
-            <button class="button" onclick="showScreen('mainScreen')">Вернуться на главную</button>
-            <button class="button secondary" onclick="startSession()">Начать новую сессию</button>
+            <button class="button" onclick="startSession()">Начать новую сессию</button>
+            <button class="button secondary" onclick="showScreen('setsScreen')">Выбрать другой набор</button>
+            <button class="button secondary" onclick="showScreen('mainScreen')">На главную</button>
         </div>
     </div>
 
@@ -711,7 +712,6 @@
                 }
 
                 displaySets(repoPath);
-                alert(`✅ Загружено ${addedCount} новых слов из набора "${setName}"!`);
                 updateMainStats();
             } catch (e) {
                 alert('Ошибка загрузки набора: ' + e.message);
@@ -919,13 +919,33 @@
             });
 
             const isCorrect = selected === correct;
-            handleAnswer(isCorrect);
+            
+            // Добавляем сообщение
+            const feedback = document.createElement('div');
+            feedback.className = `feedback ${isCorrect ? 'correct' : 'incorrect'}`;
+            feedback.innerHTML = isCorrect 
+                ? '✓ Правильно!' 
+                : `✗ Неправильно. Правильный ответ: <strong>${correct}</strong>`;
+            
+            const container = document.getElementById('questionContainer');
+            container.insertBefore(feedback, container.firstChild);
+
+            // Добавляем кнопку "Далее"
+            const nextBtn = document.createElement('button');
+            nextBtn.className = 'button';
+            nextBtn.textContent = 'Далее →';
+            nextBtn.onclick = () => handleAnswer(isCorrect);
+            nextBtn.style.marginTop = '20px';
+            container.appendChild(nextBtn);
         }
 
         // Составление слова из букв
         function showLetterConstruction() {
-            const correctWord = currentQuestion.cs.toLowerCase();
-            const letters = correctWord.split('');
+            const correctWord = currentQuestion.cs;
+            const correctLower = correctWord.toLowerCase();
+            
+            // Собираем буквы (без пробелов)
+            const letters = correctLower.replace(/ /g, '').split('');
             
             const extraLetters = czechLetters
                 .filter(l => !letters.includes(l))
@@ -934,69 +954,132 @@
             
             const allLetters = [...letters, ...extraLetters].sort(() => Math.random() - 0.5);
 
+            // Создаем шаблон с подчеркиваниями
+            const template = correctWord.split('').map(char => char === ' ' ? ' ' : '_').join('');
+
             const container = document.getElementById('questionContainer');
             container.innerHTML = `
                 <div class="question-card">
                     <div class="question-type">Составь слово на чешском</div>
                     <div class="question-text">${currentQuestion.ru}</div>
                 </div>
-                <div class="constructed-word" id="constructedWord"></div>
+                <div class="constructed-word" id="constructedWord">${template}</div>
                 <div class="letter-buttons" id="letterButtons"></div>
+                <button class="button secondary" onclick="deleteLastLetter()" style="width: auto; display: inline-block; margin-right: 10px;">⌫ Стереть букву</button>
+                <button class="button secondary" onclick="clearConstruction()" style="width: auto; display: inline-block;">Очистить всё</button>
                 <button class="button" onclick="checkConstruction()">Проверить</button>
-                <button class="button secondary" onclick="clearConstruction()">Очистить</button>
             `;
 
             const letterButtons = document.getElementById('letterButtons');
             allLetters.forEach((letter, index) => {
                 const btn = document.createElement('button');
                 btn.className = 'letter-btn';
-                btn.textContent = letter;
+                // Сохраняем регистр первой буквы если нужно
+                const displayLetter = (index === 0 && correctWord[0] === correctWord[0].toUpperCase()) ? letter.toUpperCase() : letter;
+                btn.textContent = displayLetter;
                 btn.dataset.index = index;
+                btn.dataset.letter = letter;
                 btn.onclick = () => addLetter(letter, index);
                 letterButtons.appendChild(btn);
             });
 
             window.constructedLetters = [];
+            window.correctWordTemplate = correctWord;
         }
 
         // Добавление буквы
         function addLetter(letter, index) {
+            const correctWord = window.correctWordTemplate;
+            const withoutSpaces = correctWord.replace(/ /g, '');
+            
+            // Проверяем, не заполнено ли уже слово
+            if (window.constructedLetters.length >= withoutSpaces.length) {
+                return;
+            }
+
             window.constructedLetters.push({ letter, index });
-            document.getElementById('constructedWord').textContent = 
-                window.constructedLetters.map(l => l.letter).join('');
+            updateConstructedWord();
             
             const btn = document.querySelector(`[data-index="${index}"]`);
             btn.disabled = true;
         }
 
+        // Обновление отображения составленного слова
+        function updateConstructedWord() {
+            const correctWord = window.correctWordTemplate;
+            const result = [];
+            let letterIndex = 0;
+
+            for (let i = 0; i < correctWord.length; i++) {
+                if (correctWord[i] === ' ') {
+                    result.push(' ');
+                } else {
+                    if (letterIndex < window.constructedLetters.length) {
+                        const letter = window.constructedLetters[letterIndex].letter;
+                        // Применяем регистр из оригинального слова
+                        result.push(correctWord[i] === correctWord[i].toUpperCase() ? letter.toUpperCase() : letter);
+                        letterIndex++;
+                    } else {
+                        result.push('_');
+                    }
+                }
+            }
+
+            document.getElementById('constructedWord').textContent = result.join('');
+        }
+
+        // Удаление последней буквы
+        function deleteLastLetter() {
+            if (window.constructedLetters.length === 0) return;
+            
+            const lastLetter = window.constructedLetters.pop();
+            updateConstructedWord();
+            
+            const btn = document.querySelector(`[data-index="${lastLetter.index}"]`);
+            if (btn) btn.disabled = false;
+        }
+
         // Очистка конструкции
         function clearConstruction() {
             window.constructedLetters = [];
-            document.getElementById('constructedWord').textContent = '';
+            updateConstructedWord();
             document.querySelectorAll('.letter-btn').forEach(btn => btn.disabled = false);
         }
 
         // Проверка составленного слова
         function checkConstruction() {
             const constructed = window.constructedLetters.map(l => l.letter).join('');
-            const correct = currentQuestion.cs.toLowerCase();
+            const correct = currentQuestion.cs.replace(/ /g, '').toLowerCase();
             const isCorrect = constructed === correct;
 
             const feedback = document.createElement('div');
             feedback.className = `feedback ${isCorrect ? 'correct' : 'incorrect'}`;
-            feedback.textContent = isCorrect 
+            feedback.innerHTML = isCorrect 
                 ? '✓ Правильно!' 
-                : `✗ Неправильно. Правильный ответ: ${currentQuestion.cs}`;
+                : `✗ Неправильно. Правильный ответ: <strong>${currentQuestion.cs}</strong>`;
             
             document.getElementById('questionContainer').insertBefore(
                 feedback, 
                 document.getElementById('questionContainer').firstChild
             );
 
-            document.querySelectorAll('.letter-btn').forEach(btn => btn.disabled = true);
-            document.querySelector('button.button').disabled = true;
+            // Показываем правильный ответ
+            if (!isCorrect) {
+                document.getElementById('constructedWord').textContent = currentQuestion.cs;
+            }
 
-            setTimeout(() => handleAnswer(isCorrect), 2000);
+            document.querySelectorAll('.letter-btn').forEach(btn => btn.disabled = true);
+            
+            // Заменяем кнопки на "Далее"
+            const container = document.getElementById('questionContainer');
+            const buttons = container.querySelectorAll('button.button, button.button.secondary');
+            buttons.forEach(btn => btn.remove());
+            
+            const nextBtn = document.createElement('button');
+            nextBtn.className = 'button';
+            nextBtn.textContent = 'Далее →';
+            nextBtn.onclick = () => handleAnswer(isCorrect);
+            container.appendChild(nextBtn);
         }
 
         // Обработка ответа
@@ -1018,10 +1101,7 @@
             }
 
             saveWords();
-
-            setTimeout(() => {
-                showNextQuestion();
-            }, isCorrect ? 500 : 2000);
+            showNextQuestion();
         }
 
         // Обновление статистики сессии
