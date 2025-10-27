@@ -33,6 +33,10 @@
             font-size: 2em;
         }
 
+        h2 {
+            margin-bottom: 20px;
+        }
+
         .subtitle {
             color: #666;
             margin-bottom: 30px;
@@ -152,6 +156,13 @@
             font-size: 1.8em;
             margin-bottom: 10px;
             color: #333;
+        }
+
+        .question-transcription {
+            color: #999;
+            font-size: 1em;
+            margin-bottom: 20px;
+            font-style: italic;
         }
 
         .question-type {
@@ -338,44 +349,6 @@
             background: #777;
         }
 
-        @media (max-width: 600px) {
-            .container {
-                padding: 20px;
-            }
-
-            h1 {
-                font-size: 1.5em;
-            }
-
-            .question-text {
-                font-size: 1.4em;
-            }
-
-            .letter-btn {
-                padding: 10px 14px;
-                font-size: 1em;
-                min-width: 40px;
-            }
-
-            .stats {
-                flex-direction: row;
-                gap: 10px;
-                padding: 15px 10px;
-            }
-
-            .stat-item {
-                flex: 1;
-            }
-
-            .stat-value {
-                font-size: 1.5em;
-            }
-
-            .stat-label {
-                font-size: 0.75em;
-            }
-        }
-
         .info-box {
             background: #e3f2fd;
             border-left: 4px solid #2196f3;
@@ -407,6 +380,7 @@
             margin-bottom: 15px;
             border: 2px solid #e0e0e0;
             transition: all 0.3s;
+            cursor: pointer;
         }
 
         .set-card:hover {
@@ -458,29 +432,6 @@
             color: #666;
         }
 
-        .word-preview {
-            max-height: 300px;
-            overflow-y: auto;
-            margin-top: 15px;
-            padding: 10px;
-            background: white;
-            border-radius: 5px;
-        }
-
-        .word-preview-item {
-            padding: 8px;
-            border-bottom: 1px solid #eee;
-            font-size: 0.9em;
-        }
-
-        .word-preview-item:last-child {
-            border-bottom: none;
-        }
-
-        .set-selector {
-            margin-bottom: 20px;
-        }
-
         .set-option {
             padding: 15px;
             background: #f8f9fa;
@@ -510,6 +461,127 @@
             font-size: 0.9em;
             color: #666;
         }
+
+        .word-card {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 15px;
+            transition: all 0.3s;
+        }
+
+        .word-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 3px 10px rgba(102, 126, 234, 0.15);
+        }
+
+        .word-card-cs {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .word-card-transcription {
+            font-size: 1.1em;
+            color: #999;
+            font-style: italic;
+            margin-bottom: 12px;
+        }
+
+        .word-card-ru {
+            font-size: 1.3em;
+            color: #666;
+        }
+
+        .word-card-stats {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+            font-size: 0.9em;
+            color: #999;
+        }
+
+        .sticky-buttons {
+            position: sticky;
+            top: 0;
+            background: white;
+            padding: 15px 0;
+            z-index: 10;
+            margin-bottom: 20px;
+        }
+
+        .button-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .button-row .button {
+            margin-bottom: 0;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 1.5em;
+            }
+
+            .question-text {
+                font-size: 1.4em;
+            }
+
+            .letter-btn {
+                padding: 10px 14px;
+                font-size: 1em;
+                min-width: 40px;
+            }
+
+            .stats {
+                flex-direction: row;
+                gap: 10px;
+                padding: 15px 10px;
+            }
+
+            .stat-item {
+                flex: 1;
+            }
+
+            .stat-value {
+                font-size: 1.5em;
+            }
+
+            .stat-label {
+                font-size: 0.75em;
+            }
+
+            .word-card {
+                padding: 20px;
+            }
+
+            .word-card-cs {
+                font-size: 1.5em;
+            }
+
+            .word-card-transcription {
+                font-size: 1em;
+            }
+
+            .word-card-ru {
+                font-size: 1.1em;
+            }
+
+            .button-row {
+                flex-direction: column;
+            }
+
+            .sticky-buttons {
+                padding: 10px 0;
+            }
+        }
     </style>
 </head>
 <body>
@@ -532,8 +604,21 @@
             <h2>Выбери набор для изучения</h2>
             
             <div class="set-selector" id="setSelector"></div>
+        </div>
+
+        <!-- Экран просмотра набора слов -->
+        <div id="setPreviewScreen" class="screen">
+            <div class="sticky-buttons">
+                <div class="button-row">
+                    <button class="button back-btn" onclick="closeSetPreview()" style="flex: 1;">← Назад</button>
+                    <button class="button" onclick="startSessionFromPreview()" style="flex: 1;">▶ Начать сессию</button>
+                </div>
+            </div>
             
-            <button class="button" onclick="startSessionWithSelected()" id="startSelectedBtn" disabled>Начать сессию</button>
+            <h2 id="previewSetTitle">Набор слов</h2>
+            <div id="previewSetInfo" style="margin-bottom: 20px; color: #666;"></div>
+            
+            <div id="previewWordsList"></div>
         </div>
 
         <!-- Экран наборов слов -->
@@ -569,6 +654,10 @@
             <div class="input-group">
                 <label>Чешское слово/фраза</label>
                 <input type="text" id="newWordCs" placeholder="Dobrý den">
+            </div>
+            <div class="input-group">
+                <label>Транскрипция</label>
+                <input type="text" id="newWordTr" placeholder="добры дэн">
             </div>
             <div class="input-group">
                 <label>Русский перевод</label>
@@ -652,7 +741,6 @@
     </div>
 
     <script>
-        // Глобальные переменные
         let words = [];
         let sessionWords = [];
         let currentWordIndex = 0;
@@ -662,11 +750,10 @@
         let loadedSets = [];
         let selectedSet = null;
         let isRandomMode = false;
+        let currentPreviewSet = null;
 
-        // Чешские буквы для виртуальной клавиатуры
         const czechLetters = 'aábcčdďeéěfghiíjklmnňoópqrřsštťuúůvwxyýzž'.split('');
 
-        // Вспомогательные функции для работы с localStorage
         function getFromStorage(key) {
             try {
                 const value = localStorage.getItem(key);
@@ -684,7 +771,6 @@
             }
         }
 
-        // Инициализация
         function init() {
             loadWords();
             loadSettings();
@@ -692,17 +778,14 @@
             updateMainStats();
         }
 
-        // Загрузка слов из localStorage
         function loadWords() {
             words = getFromStorage('words') || [];
         }
 
-        // Сохранение слов
         function saveWords() {
             saveToStorage('words', words);
         }
 
-        // Загрузка настроек
         function loadSettings() {
             const repoPath = getFromStorage('repoPath');
             if (repoPath) {
@@ -710,17 +793,14 @@
             }
         }
 
-        // Загрузка списка загруженных наборов
         function loadLoadedSets() {
             loadedSets = getFromStorage('loadedSets') || [];
         }
 
-        // Сохранение списка загруженных наборов
         function saveLoadedSets() {
             saveToStorage('loadedSets', loadedSets);
         }
 
-        // Загрузка списка наборов из репозитория
         async function loadSetsFromRepo() {
             const repoPath = document.getElementById('repoPath').value.trim();
             if (!repoPath) {
@@ -755,7 +835,6 @@
             }
         }
 
-        // Отображение списка наборов
         function displaySets(repoPath) {
             const container = document.getElementById('setsContainer');
             container.innerHTML = '<h3>Доступные наборы</h3>';
@@ -776,36 +855,15 @@
                     </div>
                     <div class="set-card-actions">
                         ${!isLoaded ? 
-                            `<button class="button small" onclick="loadSet('${repoPath}', '${set.file}', '${set.name}')">Загрузить набор</button>` :
-                            `<button class="button small secondary" onclick="reloadSet('${repoPath}', '${set.file}', '${set.name}')">Перезагрузить</button>`
-                        }
-                        ${isLoaded ? 
-                            `<button class="button small" onclick="viewSetWords('${set.name}')">Просмотр слов</button>` : ''
+                            `<button class="button small" onclick="loadSet('${repoPath}', '${set.file}', '${set.name}'); event.stopPropagation();">Загрузить набор</button>` :
+                            `<button class="button small secondary" onclick="reloadSet('${repoPath}', '${set.file}', '${set.name}'); event.stopPropagation();">Перезагрузить</button>`
                         }
                     </div>
-                    <div id="preview-${set.name.replace(/\s/g, '-')}" class="word-preview" style="display: none;"></div>
                 `;
                 container.appendChild(setCard);
             });
         }
 
-        // Просмотр слов набора
-        function viewSetWords(setName) {
-            const previewId = 'preview-' + setName.replace(/\s/g, '-');
-            const preview = document.getElementById(previewId);
-            
-            if (preview.style.display === 'none') {
-                const setWords = words.filter(w => w.setName === setName);
-                preview.innerHTML = setWords.map(w => 
-                    `<div class="word-preview-item"><strong>${w.cs}</strong> — ${w.ru}</div>`
-                ).join('');
-                preview.style.display = 'block';
-            } else {
-                preview.style.display = 'none';
-            }
-        }
-
-        // Загрузка набора слов
         async function loadSet(repoPath, filename, setName) {
             try {
                 const url = `https://raw.githubusercontent.com/${repoPath}/main/word-sets/${filename}`;
@@ -819,12 +877,12 @@
                     throw new Error('Неверный формат файла');
                 }
 
-                // Добавление новых слов
                 let addedCount = 0;
                 newWords.forEach(word => {
                     if (!words.find(w => w.cs === word.cs && w.ru === word.ru)) {
                         words.push({
                             cs: word.cs,
+                            tr: word.tr || '',
                             ru: word.ru,
                             correct: 0,
                             incorrect: 0,
@@ -850,7 +908,6 @@
             }
         }
 
-        // Перезагрузка набора
         async function reloadSet(repoPath, filename, setName) {
             if (!confirm(`Перезагрузить набор "${setName}"? Статистика по этим словам сохранится.`)) {
                 return;
@@ -858,18 +915,19 @@
             await loadSet(repoPath, filename, setName);
         }
 
-        // Добавление слова вручную
         function addWord() {
             const cs = document.getElementById('newWordCs').value.trim();
+            const tr = document.getElementById('newWordTr').value.trim();
             const ru = document.getElementById('newWordRu').value.trim();
 
             if (!cs || !ru) {
-                alert('Заполни оба поля');
+                alert('Заполни чешское слово и перевод');
                 return;
             }
 
             words.push({
                 cs: cs,
+                tr: tr,
                 ru: ru,
                 correct: 0,
                 incorrect: 0,
@@ -880,14 +938,14 @@
             saveWords();
             
             document.getElementById('newWordCs').value = '';
+            document.getElementById('newWordTr').value = '';
             document.getElementById('newWordRu').value = '';
             
             alert('Слово добавлено!');
         }
 
-        // Экспорт слов
         function exportWords() {
-            const exportData = words.map(w => ({ cs: w.cs, ru: w.ru }));
+            const exportData = words.map(w => ({ cs: w.cs, tr: w.tr || '', ru: w.ru }));
             const json = JSON.stringify(exportData, null, 2);
             
             const blob = new Blob([json], { type: 'application/json' });
@@ -898,7 +956,6 @@
             a.click();
         }
 
-        // Сброс статистики
         function resetStats() {
             if (!confirm('Сбросить всю статистику обучения?')) return;
             
@@ -913,7 +970,6 @@
             alert('Статистика сброшена');
         }
 
-        // Обновление главной статистики
         function updateMainStats() {
             const total = words.length;
             const learned = words.filter(w => w.correct > 0).length;
@@ -932,7 +988,6 @@
             `;
         }
 
-        // Обновление экрана статистики
         function updateStatsScreen() {
             document.getElementById('totalWords').textContent = words.length;
             document.getElementById('learnedWords').textContent = words.filter(w => w.correct > 0).length;
@@ -949,7 +1004,7 @@
                         ${word.setName ? `<br><small style="color: #999;">${word.setName}</small>` : ''}
                     </div>
                     <div class="word-item-stats">
-                        ✓${word.correct} ✗${word.incorrect}
+                        ✔${word.correct} ✗${word.incorrect}
                     </div>
                     <button class="delete-btn" onclick="deleteWord(${index})">Удалить</button>
                 `;
@@ -957,7 +1012,6 @@
             });
         }
 
-        // Удаление слова
         function deleteWord(index) {
             if (!confirm('Удалить это слово?')) return;
             words.splice(index, 1);
@@ -965,7 +1019,6 @@
             updateStatsScreen();
         }
 
-        // Показ селектора наборов
         function showSetSelector() {
             if (words.length === 0) {
                 alert('Сначала добавь слова в базу!');
@@ -977,29 +1030,26 @@
             displaySetSelector();
         }
 
-        // Отображение селектора наборов
         function displaySetSelector() {
             const container = document.getElementById('setSelector');
             const setNames = [...new Set(words.map(w => w.setName).filter(n => n))];
             
             container.innerHTML = '';
 
-            // Опция со случайными словами
             const randomOption = document.createElement('div');
             randomOption.className = 'set-option';
-            randomOption.onclick = () => selectSetOption(randomOption, null);
+            randomOption.onclick = () => startRandomSession();
             randomOption.innerHTML = `
                 <div class="set-option-title">🎲 Случайные слова</div>
                 <div class="set-option-info">15-20 слов с наибольшим количеством ошибок</div>
             `;
             container.appendChild(randomOption);
 
-            // Опции конкретных наборов
             setNames.forEach(setName => {
                 const setWords = words.filter(w => w.setName === setName);
                 const option = document.createElement('div');
                 option.className = 'set-option';
-                option.onclick = () => selectSetOption(option, setName);
+                option.onclick = () => showSetPreview(setName);
                 option.innerHTML = `
                     <div class="set-option-title">${setName}</div>
                     <div class="set-option-info">📚 ${setWords.length} слов</div>
@@ -1008,47 +1058,49 @@
             });
         }
 
-        // Выбор набора
-        function selectSetOption(element, setName) {
-            document.querySelectorAll('.set-option').forEach(opt => {
-                opt.classList.remove('selected');
+        function showSetPreview(setName) {
+            currentPreviewSet = setName;
+            const setWords = words.filter(w => w.setName === setName);
+            
+            document.getElementById('previewSetTitle').textContent = setName;
+            document.getElementById('previewSetInfo').innerHTML = `📚 Всего слов: ${setWords.length}`;
+            
+            const wordsList = document.getElementById('previewWordsList');
+            wordsList.innerHTML = '';
+            
+            setWords.forEach(word => {
+                const card = document.createElement('div');
+                card.className = 'word-card';
+                card.innerHTML = `
+                    <div class="word-card-cs">${word.cs}</div>
+                    ${word.tr ? `<div class="word-card-transcription">${word.tr}</div>` : ''}
+                    <div class="word-card-ru">${word.ru}</div>
+                    <div class="word-card-stats">
+                        ✔ Правильно: ${word.correct} | ✗ Ошибок: ${word.incorrect}
+                    </div>
+                `;
+                wordsList.appendChild(card);
             });
-            element.classList.add('selected');
-            selectedSet = setName;
-            document.getElementById('startSelectedBtn').disabled = false;
+            
+            showScreen('setPreviewScreen');
         }
 
-        // Начало сессии с выбранным набором
-        function startSessionWithSelected() {
-            if (selectedSet === null) {
-                // Случайные слова с приоритетом на ошибки
-                isRandomMode = true;
-                const sessionSize = Math.min(20, words.length);
-                
-                // Сортируем по количеству ошибок (больше ошибок = выше приоритет)
-                const sortedWords = [...words].sort((a, b) => {
-                    const errorRateA = a.incorrect / Math.max(1, a.correct + a.incorrect);
-                    const errorRateB = b.incorrect / Math.max(1, b.correct + b.incorrect);
-                    return errorRateB - errorRateA;
-                });
-                
-                // Берем топ-50% по ошибкам и перемешиваем
-                const topErrorWords = sortedWords.slice(0, Math.ceil(words.length / 2));
-                sessionWords = topErrorWords
-                    .sort(() => Math.random() - 0.5)
-                    .slice(0, sessionSize)
-                    .map(w => ({ ...w, answered: false, attempts: 0 }));
-            } else {
-                // Слова из конкретного набора - режим повторения до правильного ответа
-                isRandomMode = false;
-                const setWords = words.filter(w => w.setName === selectedSet);
-                if (setWords.length === 0) {
-                    alert('В этом наборе нет слов!');
-                    return;
-                }
-                sessionWords = setWords.map(w => ({ ...w, answered: false, attempts: 0 }));
-            }
+        function closeSetPreview() {
+            showScreen('setSelectorScreen');
+        }
 
+        function startSessionFromPreview() {
+            if (!currentPreviewSet) return;
+            
+            isRandomMode = false;
+            const setWords = words.filter(w => w.setName === currentPreviewSet);
+            
+            if (setWords.length === 0) {
+                alert('В этом наборе нет слов!');
+                return;
+            }
+            
+            sessionWords = setWords.map(w => ({ ...w, answered: false, attempts: 0 }));
             currentWordIndex = 0;
             sessionStats = { correct: 0, incorrect: 0 };
 
@@ -1056,7 +1108,29 @@
             showNextQuestion();
         }
 
-        // Показ следующего вопроса
+        function startRandomSession() {
+            isRandomMode = true;
+            const sessionSize = Math.min(20, words.length);
+            
+            const sortedWords = [...words].sort((a, b) => {
+                const errorRateA = a.incorrect / Math.max(1, a.correct + a.incorrect);
+                const errorRateB = b.incorrect / Math.max(1, b.correct + b.incorrect);
+                return errorRateB - errorRateA;
+            });
+            
+            const topErrorWords = sortedWords.slice(0, Math.ceil(words.length / 2));
+            sessionWords = topErrorWords
+                .sort(() => Math.random() - 0.5)
+                .slice(0, sessionSize)
+                .map(w => ({ ...w, answered: false, attempts: 0 }));
+            
+            currentWordIndex = 0;
+            sessionStats = { correct: 0, incorrect: 0 };
+
+            showScreen('learningScreen');
+            showNextQuestion();
+        }
+
         function showNextQuestion() {
             const unanswered = sessionWords.filter(w => !w.answered);
             
@@ -1065,7 +1139,6 @@
                 return;
             }
 
-            // В режиме конкретного набора выбираем первое неотвеченное слово
             currentQuestion = unanswered[0];
             const questionType = Math.random() < 0.5 ? 'csToRu' : 'ruToCs';
             
@@ -1078,7 +1151,6 @@
             }
         }
 
-        // Вопрос с множественным выбором
         function showMultipleChoice() {
             const correctAnswer = currentQuestion.ru;
             const wrongAnswers = words
@@ -1094,6 +1166,7 @@
                 <div class="question-card">
                     <div class="question-type">Переведи с чешского</div>
                     <div class="question-text">${currentQuestion.cs}</div>
+                    ${currentQuestion.tr ? `<div class="question-transcription">${currentQuestion.tr}</div>` : ''}
                 </div>
                 <div class="options" id="options"></div>
             `;
@@ -1108,7 +1181,6 @@
             });
         }
 
-        // Проверка множественного выбора
         function checkMultipleChoice(selected, correct, selectedBtn) {
             const buttons = document.querySelectorAll('.option-btn');
             let correctBtn = null;
@@ -1126,7 +1198,6 @@
 
             const isCorrect = selected === correct;
             
-            // Скрываем неправильные варианты на мобильных
             if (window.innerWidth <= 600) {
                 buttons.forEach(btn => {
                     if (btn !== correctBtn && btn !== selectedBtn) {
@@ -1135,17 +1206,15 @@
                 });
             }
             
-            // Добавляем сообщение
             const feedback = document.createElement('div');
             feedback.className = `feedback ${isCorrect ? 'correct' : 'incorrect'}`;
             feedback.innerHTML = isCorrect 
-                ? '✓ Правильно!' 
+                ? '✔ Правильно!' 
                 : `✗ Неправильно. Правильный ответ: <strong>${correct}</strong>`;
             
             const container = document.getElementById('questionContainer');
             container.insertBefore(feedback, container.firstChild);
 
-            // Добавляем кнопку "Далее"
             const nextBtn = document.createElement('button');
             nextBtn.className = 'button';
             nextBtn.textContent = 'Далее →';
@@ -1154,12 +1223,10 @@
             container.appendChild(nextBtn);
         }
 
-        // Составление слова из букв
         function showLetterConstruction() {
             const correctWord = currentQuestion.cs;
             const correctLower = correctWord.toLowerCase();
             
-            // Собираем буквы (без пробелов)
             const letters = correctLower.replace(/ /g, '').split('');
             
             const extraLetters = czechLetters
@@ -1169,7 +1236,6 @@
             
             const allLetters = [...letters, ...extraLetters].sort(() => Math.random() - 0.5);
 
-            // Создаем шаблон с подчеркиваниями
             const template = correctWord.split('').map(char => char === ' ' ? ' ' : '_').join('');
 
             const container = document.getElementById('questionContainer');
@@ -1186,17 +1252,14 @@
 
             const letterButtons = document.getElementById('letterButtons');
             
-            // Находим первую букву оригинального слова
             const firstLetterOriginal = correctWord[0];
             const firstLetterLower = firstLetterOriginal.toLowerCase();
             
-            // Отмечаем, что уже добавили заглавную букву
             let capitalizedAdded = false;
             
             allLetters.forEach((letter, index) => {
                 const btn = document.createElement('button');
                 btn.className = 'letter-btn';
-                // Делаем заглавной только ОДНУ букву - первую найденную, которая соответствует первой букве слова
                 const shouldCapitalize = !capitalizedAdded && letter === firstLetterLower && firstLetterOriginal === firstLetterOriginal.toUpperCase();
                 const displayLetter = shouldCapitalize ? letter.toUpperCase() : letter;
                 
@@ -1215,12 +1278,10 @@
             window.correctWordTemplate = correctWord;
         }
 
-        // Добавление буквы
         function addLetter(letter, index) {
             const correctWord = window.correctWordTemplate;
             const withoutSpaces = correctWord.replace(/ /g, '');
             
-            // Проверяем, не заполнено ли уже слово
             if (window.constructedLetters.length >= withoutSpaces.length) {
                 return;
             }
@@ -1232,7 +1293,6 @@
             btn.disabled = true;
         }
 
-        // Обновление отображения составленного слова
         function updateConstructedWord() {
             const correctWord = window.correctWordTemplate;
             const result = [];
@@ -1244,7 +1304,6 @@
                 } else {
                     if (letterIndex < window.constructedLetters.length) {
                         const letter = window.constructedLetters[letterIndex].letter;
-                        // Применяем регистр из оригинального слова
                         result.push(correctWord[i] === correctWord[i].toUpperCase() ? letter.toUpperCase() : letter);
                         letterIndex++;
                     } else {
@@ -1256,7 +1315,6 @@
             document.getElementById('constructedWord').textContent = result.join('');
         }
 
-        // Удаление последней буквы
         function deleteLastLetter() {
             if (window.constructedLetters.length === 0) return;
             
@@ -1267,7 +1325,6 @@
             if (btn) btn.disabled = false;
         }
 
-        // Проверка составленного слова
         function checkConstruction() {
             const constructed = window.constructedLetters.map(l => l.letter).join('');
             const correct = currentQuestion.cs.replace(/ /g, '').toLowerCase();
@@ -1276,22 +1333,20 @@
             const feedback = document.createElement('div');
             feedback.className = `feedback ${isCorrect ? 'correct' : 'incorrect'}`;
             feedback.innerHTML = isCorrect 
-                ? '✓ Правильно!' 
-                : `✗ Неправильно. Правильный ответ: <strong>${currentQuestion.cs}</strong>`;
+                ? '✔ Правильно!' 
+                : `✗ Неправильно. Правильный ответ: <strong>${currentQuestion.cs}</strong>${currentQuestion.tr ? ` (${currentQuestion.tr})` : ''}`;
             
             document.getElementById('questionContainer').insertBefore(
                 feedback, 
                 document.getElementById('questionContainer').firstChild
             );
 
-            // Показываем правильный ответ
             if (!isCorrect) {
                 document.getElementById('constructedWord').textContent = currentQuestion.cs;
             }
 
             document.querySelectorAll('.letter-btn').forEach(btn => btn.disabled = true);
             
-            // Заменяем кнопки на "Далее"
             const container = document.getElementById('questionContainer');
             const buttons = container.querySelectorAll('button.button, button.button.secondary');
             buttons.forEach(btn => btn.remove());
@@ -1303,7 +1358,6 @@
             container.appendChild(nextBtn);
         }
 
-        // Обработка ответа
         function handleAnswer(isCorrect) {
             currentQuestion.attempts++;
             
@@ -1315,28 +1369,20 @@
                 sessionStats.incorrect++;
                 currentQuestion.incorrect++;
                 
-                // В режиме конкретного набора при ошибке слово уходит в конец очереди
                 if (!isRandomMode) {
-                    // Находим индекс текущего слова
                     const currentIndex = sessionWords.findIndex(w => 
                         w.cs === currentQuestion.cs && w.ru === currentQuestion.ru
                     );
                     
                     if (currentIndex !== -1) {
-                        // Удаляем слово из текущей позиции
                         const word = sessionWords.splice(currentIndex, 1)[0];
-                        
-                        // Вставляем его через 3-5 слов (случайно)
                         const offset = Math.floor(Math.random() * 3) + 3;
-                        const unansweredCount = sessionWords.filter(w => !w.answered).length;
                         const insertPosition = Math.min(currentIndex + offset, sessionWords.length);
-                        
                         sessionWords.splice(insertPosition, 0, word);
                     }
                 }
             }
 
-            // Обновляем статистику в базе
             const wordInBase = words.find(w => w.cs === currentQuestion.cs && w.ru === currentQuestion.ru);
             if (wordInBase) {
                 if (isCorrect) {
@@ -1351,7 +1397,6 @@
             showNextQuestion();
         }
 
-        // Обновление статистики сессии
         function updateSessionStats() {
             const answered = sessionWords.filter(w => w.answered).length;
             const total = sessionWords.length;
@@ -1368,7 +1413,6 @@
             progressBar.style.width = progress + '%';
             progressText.textContent = Math.round(progress) + '%';
             
-            // Меняем цвет текста в зависимости от прогресса
             if (progress > 0) {
                 progressText.classList.remove('dark');
                 progressText.classList.add('light');
@@ -1378,7 +1422,6 @@
             }
         }
 
-        // Показ результатов
         function showResults() {
             const total = sessionStats.correct + sessionStats.incorrect;
             const accuracy = total > 0 ? Math.round((sessionStats.correct / total) * 100) : 0;
@@ -1390,7 +1433,6 @@
             showScreen('resultsScreen');
         }
 
-        // Завершение сессии
         function endSession() {
             if (confirm('Завершить сессию? Прогресс будет сохранен.')) {
                 showScreen('mainScreen');
@@ -1398,7 +1440,6 @@
             }
         }
 
-        // Переключение экранов
         function showScreen(screenId) {
             document.querySelectorAll('.screen').forEach(screen => {
                 screen.classList.remove('active');
@@ -1413,7 +1454,6 @@
             }
         }
 
-        // Инициализация при загрузке
         init();
     </script>
 </body>
