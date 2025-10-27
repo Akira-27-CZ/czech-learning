@@ -193,6 +193,10 @@
             border-color: #f44336;
         }
 
+        .option-btn.hidden {
+            display: none;
+        }
+
         .letter-buttons {
             display: flex;
             flex-wrap: wrap;
@@ -657,6 +661,7 @@
         let availableSets = [];
         let loadedSets = [];
         let selectedSet = null;
+        let isRandomMode = false;
 
         // Чешские буквы для виртуальной клавиатуры
         const czechLetters = 'aábcčdďeéěfghiíjklmnňoópqrřsštťuúůvwxyýzž'.split('');
@@ -985,7 +990,7 @@
             randomOption.onclick = () => selectSetOption(randomOption, null);
             randomOption.innerHTML = `
                 <div class="set-option-title">🎲 Случайные слова</div>
-                <div class="set-option-info">15-20 слов из всех наборов</div>
+                <div class="set-option-info">15-20 слов с наибольшим количеством ошибок</div>
             `;
             container.appendChild(randomOption);
 
@@ -1016,24 +1021,32 @@
         // Начало сессии с выбранным набором
         function startSessionWithSelected() {
             if (selectedSet === null) {
-                // Случайные слова из всех наборов
+                // Случайные слова с приоритетом на ошибки
+                isRandomMode = true;
                 const sessionSize = Math.min(20, words.length);
-                sessionWords = [...words]
+                
+                // Сортируем по количеству ошибок (больше ошибок = выше приоритет)
+                const sortedWords = [...words].sort((a, b) => {
+                    const errorRateA = a.incorrect / Math.max(1, a.correct + a.incorrect);
+                    const errorRateB = b.incorrect / Math.max(1, b.correct + b.incorrect);
+                    return errorRateB - errorRateA;
+                });
+                
+                // Берем топ-50% по ошибкам и перемешиваем
+                const topErrorWords = sortedWords.slice(0, Math.ceil(words.length / 2));
+                sessionWords = topErrorWords
                     .sort(() => Math.random() - 0.5)
                     .slice(0, sessionSize)
-                    .map(w => ({ ...w, answered: false }));
+                    .map(w => ({ ...w, answered: false, attempts: 0 }));
             } else {
-                // Слова из конкретного набора
+                // Слова из конкретного набора - режим повторения до правильного ответа
+                isRandomMode = false;
                 const setWords = words.filter(w => w.setName === selectedSet);
                 if (setWords.length === 0) {
                     alert('В этом наборе нет слов!');
                     return;
                 }
-                const sessionSize = Math.min(15, setWords.length);
-                sessionWords = [...setWords]
-                    .sort(() => Math.random() - 0.5)
-                    .slice(0, sessionSize)
-                    .map(w => ({ ...w, answered: false }));
+                sessionWords = setWords.map(w => ({ ...w, answered: false, attempts: 0 }));
             }
 
             currentWordIndex = 0;
@@ -1052,6 +1065,7 @@
                 return;
             }
 
+            // В режиме конкретного набора выбираем первое неотвеченное слово
             currentQuestion = unanswered[0];
             const questionType = Math.random() < 0.5 ? 'csToRu' : 'ruToCs';
             
@@ -1089,18 +1103,21 @@
                 const btn = document.createElement('button');
                 btn.className = 'option-btn';
                 btn.textContent = answer;
-                btn.onclick = () => checkMultipleChoice(answer, correctAnswer);
+                btn.onclick = () => checkMultipleChoice(answer, correctAnswer, btn);
                 optionsDiv.appendChild(btn);
             });
         }
 
         // Проверка множественного выбора
-        function checkMultipleChoice(selected, correct) {
+        function checkMultipleChoice(selected, correct, selectedBtn) {
             const buttons = document.querySelectorAll('.option-btn');
+            let correctBtn = null;
+            
             buttons.forEach(btn => {
                 btn.disabled = true;
                 if (btn.textContent === correct) {
                     btn.classList.add('correct');
+                    correctBtn = btn;
                 }
                 if (btn.textContent === selected && selected !== correct) {
                     btn.classList.add('incorrect');
@@ -1108,6 +1125,15 @@
             });
 
             const isCorrect = selected === correct;
+            
+            // Скрываем неправильные варианты на мобильных
+            if (window.innerWidth <= 600) {
+                buttons.forEach(btn => {
+                    if (btn !== correctBtn && btn !== selectedBtn) {
+                        btn.classList.add('hidden');
+                    }
+                });
+            }
             
             // Добавляем сообщение
             const feedback = document.createElement('div');
@@ -1164,13 +1190,20 @@
             const firstLetterOriginal = correctWord[0];
             const firstLetterLower = firstLetterOriginal.toLowerCase();
             
+            // Отмечаем, что уже добавили заглавную букву
+            let capitalizedAdded = false;
+            
             allLetters.forEach((letter, index) => {
                 const btn = document.createElement('button');
                 btn.className = 'letter-btn';
-                // Делаем заглавной только ту букву, которая является первой в оригинале
-                const displayLetter = (letter === firstLetterLower && firstLetterOriginal === firstLetterOriginal.toUpperCase()) 
-                    ? letter.toUpperCase() 
-                    : letter;
+                // Делаем заглавной только ОДНУ букву - первую найденную, которая соответствует первой букве слова
+                const shouldCapitalize = !capitalizedAdded && letter === firstLetterLower && firstLetterOriginal === firstLetterOriginal.toUpperCase();
+                const displayLetter = shouldCapitalize ? letter.toUpperCase() : letter;
+                
+                if (shouldCapitalize) {
+                    capitalizedAdded = true;
+                }
+                
                 btn.textContent = displayLetter;
                 btn.dataset.index = index;
                 btn.dataset.letter = letter;
@@ -1272,6 +1305,8 @@
 
         // Обработка ответа
         function handleAnswer(isCorrect) {
+            currentQuestion.attempts++;
+            
             if (isCorrect) {
                 sessionStats.correct++;
                 currentQuestion.answered = true;
@@ -1279,12 +1314,36 @@
             } else {
                 sessionStats.incorrect++;
                 currentQuestion.incorrect++;
+                
+                // В режиме конкретного набора при ошибке слово уходит в конец очереди
+                if (!isRandomMode) {
+                    // Находим индекс текущего слова
+                    const currentIndex = sessionWords.findIndex(w => 
+                        w.cs === currentQuestion.cs && w.ru === currentQuestion.ru
+                    );
+                    
+                    if (currentIndex !== -1) {
+                        // Удаляем слово из текущей позиции
+                        const word = sessionWords.splice(currentIndex, 1)[0];
+                        
+                        // Вставляем его через 3-5 слов (случайно)
+                        const offset = Math.floor(Math.random() * 3) + 3;
+                        const unansweredCount = sessionWords.filter(w => !w.answered).length;
+                        const insertPosition = Math.min(currentIndex + offset, sessionWords.length);
+                        
+                        sessionWords.splice(insertPosition, 0, word);
+                    }
+                }
             }
 
+            // Обновляем статистику в базе
             const wordInBase = words.find(w => w.cs === currentQuestion.cs && w.ru === currentQuestion.ru);
             if (wordInBase) {
-                wordInBase.correct = currentQuestion.correct;
-                wordInBase.incorrect = currentQuestion.incorrect;
+                if (isCorrect) {
+                    wordInBase.correct++;
+                } else {
+                    wordInBase.incorrect++;
+                }
                 wordInBase.lastReview = new Date().toISOString();
             }
 
