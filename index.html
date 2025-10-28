@@ -1544,39 +1544,52 @@
             const btn = document.querySelector(`[data-index="${lastLetter.index}"]`);
             if (btn) btn.disabled = false;
         }
-
-        function checkConstruction() {
-            const constructed = window.constructedLetters.map(l => l.letter).join('').toLowerCase();
-            const correct = currentQuestion.cs.replace(/ /g, '').toLowerCase();
-            const isCorrect = constructed === correct;
-
-            const feedback = document.createElement('div');
-            feedback.className = `feedback ${isCorrect ? 'correct' : 'incorrect'}`;
-            feedback.innerHTML = isCorrect 
-                ? '✓ Правильно!' 
-                : `✗ Неправильно. Правильный ответ: <strong>${currentQuestion.cs}</strong>`;
-            
-            document.getElementById('questionContainer').insertBefore(
-                feedback, 
-                document.getElementById('questionContainer').firstChild
-            );
-
-            if (!isCorrect) {
-                document.getElementById('constructedWord').textContent = currentQuestion.cs;
+function checkConstruction() {
+    // Собираем составленное слово с учетом пробелов из шаблона
+    const correctWord = window.correctWordTemplate;
+    let constructed = '';
+    let letterIndex = 0;
+    
+    for (let i = 0; i < correctWord.length; i++) {
+        if (correctWord[i] === ' ') {
+            constructed += ' ';
+        } else {
+            if (letterIndex < window.constructedLetters.length) {
+                constructed += window.constructedLetters[letterIndex].letter;
+                letterIndex++;
             }
-
-            document.querySelectorAll('.letter-btn').forEach(btn => btn.disabled = true);
-            
-            const container = document.getElementById('questionContainer');
-            const buttons = container.querySelectorAll('button.button, button.button.secondary');
-            buttons.forEach(btn => btn.remove());
-            
-            const nextBtn = document.createElement('button');
-            nextBtn.className = 'button';
-            nextBtn.textContent = 'Далее →';
-            nextBtn.onclick = () => handleAnswer(isCorrect);
-            container.appendChild(nextBtn);
         }
+    }
+    
+    const isCorrect = constructed.toLowerCase() === correctWord.toLowerCase();
+
+    const feedback = document.createElement('div');
+    feedback.className = `feedback ${isCorrect ? 'correct' : 'incorrect'}`;
+    feedback.innerHTML = isCorrect 
+        ? '✓ Правильно!' 
+        : `✗ Неправильно. Правильный ответ: <strong>${currentQuestion.cs}</strong>`;
+    
+    document.getElementById('questionContainer').insertBefore(
+        feedback, 
+        document.getElementById('questionContainer').firstChild
+    );
+
+    if (!isCorrect) {
+        document.getElementById('constructedWord').textContent = currentQuestion.cs;
+    }
+
+    document.querySelectorAll('.letter-btn').forEach(btn => btn.disabled = true);
+    
+    const container = document.getElementById('questionContainer');
+    const buttons = container.querySelectorAll('button.button, button.button.secondary');
+    buttons.forEach(btn => btn.remove());
+    
+    const nextBtn = document.createElement('button');
+    nextBtn.className = 'button';
+    nextBtn.textContent = 'Далее →';
+    nextBtn.onclick = () => handleAnswer(isCorrect);
+    container.appendChild(nextBtn);
+}
 
         function handleAnswer(isCorrect) {
             currentQuestion.attempts++;
