@@ -158,6 +158,7 @@
             font-size: 1.8em;
             margin-bottom: 10px;
             color: #333;
+            word-break: break-word;
         }
 
         .question-transcription {
@@ -250,6 +251,16 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            word-break: break-word;
+            text-align: center;
+        }
+
+        .constructed-word.long {
+            font-size: 1.4em;
+        }
+
+        .constructed-word.very-long {
+            font-size: 1.2em;
         }
 
         .feedback {
@@ -549,6 +560,19 @@
                 font-size: 1.4em;
             }
 
+            .constructed-word {
+                font-size: 1.4em;
+                padding: 15px;
+            }
+
+            .constructed-word.long {
+                font-size: 1.1em;
+            }
+
+            .constructed-word.very-long {
+                font-size: 0.95em;
+            }
+
             .letter-btn {
                 padding: 10px 14px;
                 font-size: 1em;
@@ -629,6 +653,34 @@
             <div class="set-selector" id="setSelector"></div>
         </div>
 
+        <!-- Экран параметров сессии -->
+        <div id="sessionParamsScreen" class="screen">
+            <button class="button back-btn" onclick="returnFromSessionParams()">← Назад</button>
+            <h2>Настройки сессии</h2>
+            
+            <div class="input-group">
+                <label>Размер сессии</label>
+                <select id="sessionSize">
+                    <option value="10">Быстрая (10 слов)</option>
+                    <option value="20" selected>Стандартная (20 слов)</option>
+                    <option value="30">Расширенная (30 слов)</option>
+                    <option value="all">Полный набор (все слова)</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label>Режим подбора</label>
+                <select id="selectionMode">
+                    <option value="smart" selected>Умный подбор (новые + проблемные)</option>
+                    <option value="random">Случайные слова</option>
+                    <option value="problematic">Только проблемные (&lt; 50%)</option>
+                    <option value="new">Только новые (не изучались)</option>
+                </select>
+            </div>
+
+            <button class="button" onclick="startSessionWithParams()">▶ Начать сессию</button>
+        </div>
+
         <!-- Экран просмотра набора слов -->
         <div id="setPreviewScreen" class="screen">
             <div class="sticky-buttons">
@@ -649,36 +701,7 @@
             <button class="button back-btn" onclick="showScreen('mainScreen')">← Назад</button>
             <h2>Наборы слов</h2>
             
-            <div class="input-group">
-                <label>Путь к репозиторию GitHub</label>
-                <input type="text" id="repoPath" placeholder="username/repository-name">
-                <small style="color: #666; display: block; margin-top: 5px;">
-                    Например: <code>ivanov/czech-learning</code>
-                </small>
-            </div>
-
-            <button class="button" onclick="loadSetsFromRepo()">Загрузить список наборов</button>
-
-            <hr style="margin: 30px 0;">
-
-            <div id="setsContainer"></div>
-
-            <hr style="margin: 30px 0;">
-
-            <h3>Добавить слова вручную</h3>
-            <div class="input-group">
-                <label>Чешское слово/фраза</label>
-                <input type="text" id="newWordCs" placeholder="Dobrý den">
-            </div>
-            <div class="input-group">
-                <label>Транскрипция (необязательно)</label>
-                <input type="text" id="newWordTr" placeholder="добры дэн">
-            </div>
-            <div class="input-group">
-                <label>Русский перевод</label>
-                <input type="text" id="newWordRu" placeholder="Добрый день">
-            </div>
-            <button class="button" onclick="addWord()">Добавить слово</button>
+            <div id="setsContainer" class="loading">⏳ Загрузка наборов...</div>
         </div>
 
         <!-- Экран статистики -->
@@ -781,10 +804,12 @@
         let availableSets = [];
         let loadedSets = [];
         let selectedSet = null;
-        let isRandomMode = false;
         let currentPreviewSet = null;
         let sortAscending = false;
+        let sessionParams = null;
+        let returnScreenFromParams = 'setSelectorScreen';
 
+        const REPO_PATH = 'Akira-27-CZ/czech-learning';
         const czechLetters = 'aábcčdďeéěfghiíjklmnňoópqrřsštťuúůvwxyýzž'.split('');
 
         function getFromStorage(key) {
@@ -806,7 +831,6 @@
 
         function init() {
             loadWords();
-            loadSettings();
             loadLoadedSets();
             updateMainStats();
         }
@@ -819,13 +843,6 @@
             saveToStorage('words', words);
         }
 
-        function loadSettings() {
-            const repoPath = getFromStorage('repoPath');
-            if (repoPath) {
-                document.getElementById('repoPath').value = repoPath;
-            }
-        }
-
         function loadLoadedSets() {
             loadedSets = getFromStorage('loadedSets') || [];
         }
@@ -835,17 +852,11 @@
         }
 
         async function loadSetsFromRepo() {
-            const repoPath = document.getElementById('repoPath').value.trim();
-            if (!repoPath) {
-                alert('Введи путь к репозиторию (например: username/repo-name)');
-                return;
-            }
-
             const container = document.getElementById('setsContainer');
             container.innerHTML = '<div class="loading">⏳ Загрузка списка наборов...</div>';
 
             try {
-                const indexUrl = `https://raw.githubusercontent.com/${repoPath}/main/word-sets/index.json`;
+                const indexUrl = `https://raw.githubusercontent.com/${REPO_PATH}/main/word-sets/index.json`;
                 const response = await fetch(indexUrl);
                 
                 if (!response.ok) {
@@ -860,15 +871,14 @@
                     return;
                 }
 
-                saveToStorage('repoPath', repoPath);
-                displaySets(repoPath);
+                displaySets();
                 
             } catch (e) {
                 container.innerHTML = `<div class="error-box">Ошибка загрузки: ${e.message}</div>`;
             }
         }
 
-        function displaySets(repoPath) {
+        function displaySets() {
             const container = document.getElementById('setsContainer');
             container.innerHTML = '<h3>Доступные наборы</h3>';
 
@@ -888,8 +898,8 @@
                     </div>
                     <div class="set-card-actions">
                         ${!isLoaded ? 
-                            `<button class="button small" onclick="loadSet('${repoPath}', '${set.file}', '${set.name}')">Загрузить набор</button>` :
-                            `<button class="button small secondary" onclick="reloadSet('${repoPath}', '${set.file}', '${set.name}')">Обновить</button>
+                            `<button class="button small" onclick="loadSet('${set.file}', '${set.name}')">Загрузить набор</button>` :
+                            `<button class="button small secondary" onclick="reloadSet('${set.file}', '${set.name}')">Обновить</button>
                              <button class="button small" onclick="viewSetWordsFromSets('${set.name}')">Просмотр слов</button>
                              <button class="button small danger" onclick="deleteSet('${set.file}', '${set.name}')">Удалить набор</button>`
                         }
@@ -899,9 +909,9 @@
             });
         }
 
-        async function loadSet(repoPath, filename, setName) {
+        async function loadSet(filename, setName) {
             try {
-                const url = `https://raw.githubusercontent.com/${repoPath}/main/word-sets/${filename}`;
+                const url = `https://raw.githubusercontent.com/${REPO_PATH}/main/word-sets/${filename}`;
                 const response = await fetch(url);
                 
                 if (!response.ok) throw new Error('Не удалось загрузить набор');
@@ -935,7 +945,7 @@
                     saveLoadedSets();
                 }
 
-                displaySets(repoPath);
+                displaySets();
                 updateMainStats();
                 alert(`Добавлено слов: ${addedCount}`);
             } catch (e) {
@@ -943,13 +953,13 @@
             }
         }
 
-        async function reloadSet(repoPath, filename, setName) {
+        async function reloadSet(filename, setName) {
             if (!confirm(`Обновить набор "${setName}"?\n\nСтарые слова из этого набора будут удалены.\nНовые слова будут загружены из файла.\nСтатистика обучения будет потеряна для этого набора.`)) {
                 return;
             }
 
             try {
-                const url = `https://raw.githubusercontent.com/${repoPath}/main/word-sets/${filename}`;
+                const url = `https://raw.githubusercontent.com/${REPO_PATH}/main/word-sets/${filename}`;
                 const response = await fetch(url);
                 
                 if (!response.ok) throw new Error('Не удалось загрузить набор');
@@ -975,7 +985,7 @@
                 });
 
                 saveWords();
-                displaySets(repoPath);
+                displaySets();
                 updateMainStats();
                 alert(`Набор "${setName}" обновлен!\nДобавлено новых слов: ${newWords.length}`);
             } catch (e) {
@@ -994,10 +1004,7 @@
             saveWords();
             saveLoadedSets();
 
-            const repoPath = document.getElementById('repoPath').value.trim();
-            if (repoPath) {
-                displaySets(repoPath);
-            }
+            displaySets();
             updateMainStats();
             alert(`Набор "${setName}" удален`);
         }
@@ -1041,15 +1048,52 @@
         function startSessionFromPreview() {
             if (!currentPreviewSet) return;
             
-            isRandomMode = false;
-            const setWords = words.filter(w => w.setName === currentPreviewSet);
+            sessionParams = {
+                setName: currentPreviewSet,
+                isRandom: false
+            };
+            returnScreenFromParams = 'setPreviewScreen';
+            showScreen('sessionParamsScreen');
+        }
+
+        function returnFromSessionParams() {
+            showScreen(returnScreenFromParams);
+        }
+
+        function startSessionWithParams() {
+            const size = document.getElementById('sessionSize').value;
+            const mode = document.getElementById('selectionMode').value;
             
-            if (setWords.length === 0) {
-                alert('В этом наборе нет слов!');
+            let availableWords = [];
+            
+            if (sessionParams.isRandom) {
+                availableWords = [...words];
+            } else {
+                availableWords = words.filter(w => w.setName === sessionParams.setName);
+            }
+            
+            if (availableWords.length === 0) {
+                alert('Нет доступных слов для обучения!');
                 return;
             }
             
-            sessionWords = setWords.map(w => ({ ...w, answered: false, attempts: 0 }));
+            // Фильтрация по режиму подбора
+            let filteredWords = selectWordsByMode(availableWords, mode);
+            
+            if (filteredWords.length === 0) {
+                alert('Нет слов, соответствующих выбранному режиму!');
+                return;
+            }
+            
+            // Определение размера сессии
+            const sessionSize = size === 'all' ? filteredWords.length : Math.min(parseInt(size), filteredWords.length);
+            
+            // Перемешиваем и берем нужное количество
+            sessionWords = filteredWords
+                .sort(() => Math.random() - 0.5)
+                .slice(0, sessionSize)
+                .map(w => ({ ...w, answered: false, attempts: 0 }));
+            
             currentWordIndex = 0;
             sessionStats = { correct: 0, incorrect: 0 };
 
@@ -1057,33 +1101,57 @@
             showNextQuestion();
         }
 
-        function addWord() {
-            const cs = document.getElementById('newWordCs').value.trim();
-            const tr = document.getElementById('newWordTr').value.trim();
-            const ru = document.getElementById('newWordRu').value.trim();
-
-            if (!cs || !ru) {
-                alert('Заполни чешское слово и перевод');
-                return;
+        function selectWordsByMode(availableWords, mode) {
+            switch(mode) {
+                case 'smart':
+                    // Умный подбор: новые слова + проблемные + давно не повторялись
+                    return availableWords.sort((a, b) => {
+                        const totalA = a.correct + a.incorrect;
+                        const totalB = b.correct + b.incorrect;
+                        
+                        // Новые слова в приоритете
+                        if (totalA === 0 && totalB > 0) return -1;
+                        if (totalB === 0 && totalA > 0) return 1;
+                        if (totalA === 0 && totalB === 0) return 0;
+                        
+                        // Процент правильных ответов (меньше = выше приоритет)
+                        const successRateA = a.correct / totalA;
+                        const successRateB = b.correct / totalB;
+                        
+                        if (Math.abs(successRateA - successRateB) > 0.1) {
+                            return successRateA - successRateB;
+                        }
+                        
+                        // Если процент похож, смотрим на дату последнего повторения
+                        const dateA = a.lastReview ? new Date(a.lastReview).getTime() : 0;
+                        const dateB = b.lastReview ? new Date(b.lastReview).getTime() : 0;
+                        return dateA - dateB;
+                    });
+                    
+                case 'random':
+                    return availableWords.sort(() => Math.random() - 0.5);
+                    
+                case 'problematic':
+                    // Только слова с успешностью < 50%
+                    return availableWords.filter(w => {
+                        const total = w.correct + w.incorrect;
+                        if (total === 0) return false;
+                        return (w.correct / total) < 0.5;
+                    }).sort((a, b) => {
+                        const totalA = a.correct + a.incorrect;
+                        const totalB = b.correct + b.incorrect;
+                        const successRateA = a.correct / totalA;
+                        const successRateB = b.correct / totalB;
+                        return successRateA - successRateB;
+                    });
+                    
+                case 'new':
+                    // Только неизученные слова
+                    return availableWords.filter(w => w.correct === 0 && w.incorrect === 0);
+                    
+                default:
+                    return availableWords;
             }
-
-            words.push({
-                cs: cs,
-                tr: tr,
-                ru: ru,
-                correct: 0,
-                incorrect: 0,
-                lastReview: null,
-                setName: 'Локальные слова'
-            });
-
-            saveWords();
-            
-            document.getElementById('newWordCs').value = '';
-            document.getElementById('newWordTr').value = '';
-            document.getElementById('newWordRu').value = '';
-            
-            alert('Слово добавлено!');
         }
 
         function exportWords() {
@@ -1236,10 +1304,12 @@
 
             const randomOption = document.createElement('div');
             randomOption.className = 'set-option';
-            randomOption.onclick = () => startRandomSession();
             randomOption.innerHTML = `
                 <div class="set-option-title">🎲 Случайные слова</div>
-                <div class="set-option-info">15-20 слов с наибольшим количеством ошибок</div>
+                <div class="set-option-info">Слова из всех наборов с умным подбором</div>
+                <div style="margin-top: 10px;">
+                    <button class="button small secondary" onclick="event.stopPropagation(); startRandomSession()">Начать сессию</button>
+                </div>
             `;
             container.appendChild(randomOption);
 
@@ -1260,43 +1330,21 @@
         }
 
         function startSessionWithSet(setName) {
-            isRandomMode = false;
-            const setWords = words.filter(w => w.setName === setName);
-            
-            if (setWords.length === 0) {
-                alert('В этом наборе нет слов!');
-                return;
-            }
-            
-            sessionWords = setWords.map(w => ({ ...w, answered: false, attempts: 0 }));
-            currentWordIndex = 0;
-            sessionStats = { correct: 0, incorrect: 0 };
-
-            showScreen('learningScreen');
-            showNextQuestion();
+            sessionParams = {
+                setName: setName,
+                isRandom: false
+            };
+            returnScreenFromParams = 'setSelectorScreen';
+            showScreen('sessionParamsScreen');
         }
 
         function startRandomSession() {
-            isRandomMode = true;
-            const sessionSize = Math.min(20, words.length);
-            
-            const sortedWords = [...words].sort((a, b) => {
-                const errorRateA = a.incorrect / Math.max(1, a.correct + a.incorrect);
-                const errorRateB = b.incorrect / Math.max(1, b.correct + b.incorrect);
-                return errorRateB - errorRateA;
-            });
-            
-            const topErrorWords = sortedWords.slice(0, Math.ceil(words.length / 2));
-            sessionWords = topErrorWords
-                .sort(() => Math.random() - 0.5)
-                .slice(0, sessionSize)
-                .map(w => ({ ...w, answered: false, attempts: 0 }));
-            
-            currentWordIndex = 0;
-            sessionStats = { correct: 0, incorrect: 0 };
-
-            showScreen('learningScreen');
-            showNextQuestion();
+            sessionParams = {
+                setName: null,
+                isRandom: true
+            };
+            returnScreenFromParams = 'setSelectorScreen';
+            showScreen('sessionParamsScreen');
         }
 
         function showNextQuestion() {
@@ -1397,10 +1445,14 @@
             
             const letters = correctLower.replace(/ /g, '').split('');
             
+            // Уменьшенное количество лишних букв
+            const wordLength = letters.length;
+            const extraCount = Math.min(3, Math.ceil(wordLength * 0.2));
+            
             const extraLetters = czechLetters
                 .filter(l => !letters.includes(l))
                 .sort(() => Math.random() - 0.5)
-                .slice(0, 5);
+                .slice(0, extraCount);
             
             const allLetters = [...letters, ...extraLetters].sort(() => Math.random() - 0.5);
 
@@ -1412,7 +1464,7 @@
                     <div class="question-type">Составь слово на чешском</div>
                     <div class="question-text">${currentQuestion.ru}</div>
                 </div>
-                <div class="constructed-word" id="constructedWord">${template}</div>
+                <div class="constructed-word ${wordLength > 15 ? 'long' : ''} ${wordLength > 25 ? 'very-long' : ''}" id="constructedWord">${template}</div>
                 <div class="letter-buttons" id="letterButtons"></div>
                 <button class="button secondary" onclick="deleteLastLetter()" style="width: auto; display: inline-block; margin-right: 10px;">⌫ Стереть букву</button>
                 <button class="button" onclick="checkConstruction()">Проверить</button>
@@ -1494,7 +1546,7 @@
         }
 
         function checkConstruction() {
-            const constructed = window.constructedLetters.map(l => l.letter).join('');
+            const constructed = window.constructedLetters.map(l => l.letter).join('').toLowerCase();
             const correct = currentQuestion.cs.replace(/ /g, '').toLowerCase();
             const isCorrect = constructed === correct;
 
@@ -1537,17 +1589,16 @@
                 sessionStats.incorrect++;
                 currentQuestion.incorrect++;
                 
-                if (!isRandomMode) {
-                    const currentIndex = sessionWords.findIndex(w => 
-                        w.cs === currentQuestion.cs && w.ru === currentQuestion.ru
-                    );
-                    
-                    if (currentIndex !== -1) {
-                        const word = sessionWords.splice(currentIndex, 1)[0];
-                        const offset = Math.floor(Math.random() * 3) + 3;
-                        const insertPosition = Math.min(currentIndex + offset, sessionWords.length);
-                        sessionWords.splice(insertPosition, 0, word);
-                    }
+                // В любом режиме возвращаем слово в очередь
+                const currentIndex = sessionWords.findIndex(w => 
+                    w.cs === currentQuestion.cs && w.ru === currentQuestion.ru
+                );
+                
+                if (currentIndex !== -1) {
+                    const word = sessionWords.splice(currentIndex, 1)[0];
+                    const offset = Math.floor(Math.random() * 3) + 3;
+                    const insertPosition = Math.min(currentIndex + offset, sessionWords.length);
+                    sessionWords.splice(insertPosition, 0, word);
                 }
             }
 
@@ -1619,6 +1670,9 @@
             }
             if (screenId === 'mainScreen') {
                 updateMainStats();
+            }
+            if (screenId === 'setsScreen') {
+                loadSetsFromRepo();
             }
         }
 
