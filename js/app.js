@@ -6,6 +6,23 @@ window.returnScreenFromParams = 'setSelectorScreen';
 
 function init() {
     updateMainStats();
+    // Загружаем список наборов при старте приложения
+    loadSetsIndex();
+}
+
+// Загружаем только данные о наборах (без отображения)
+async function loadSetsIndex() {
+    try {
+        const indexUrl = `https://raw.githubusercontent.com/Akira-27-CZ/czech-learning/main/word-sets/index.json`;
+        const response = await fetch(indexUrl);
+        
+        if (response.ok) {
+            const data = await response.json();
+            availableSets = data.sets || [];
+        }
+    } catch (e) {
+        console.error('Не удалось загрузить список наборов:', e);
+    }
 }
 
 function showScreen(screenId) {
@@ -21,7 +38,8 @@ function showScreen(screenId) {
         updateMainStats();
     }
     if (screenId === 'setsScreen') {
-        loadSetsFromRepo();
+        // Теперь только отображаем наборы (данные уже загружены)
+        displaySets();
     }
 }
 
