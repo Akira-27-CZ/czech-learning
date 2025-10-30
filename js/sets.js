@@ -2,38 +2,23 @@
 
 const REPO_PATH = 'Akira-27-CZ/czech-learning';
 
-let availableSets = [];
+// availableSets уже объявлен глобально в app.js, не нужно дублировать
+// let availableSets = [];  <-- удали эту строку
 
+// Эту функцию больше не нужно вызывать - данные загружаются в app.js
 async function loadSetsFromRepo() {
-    const container = document.getElementById('setsContainer');
-    container.innerHTML = '<div class="loading">⏳ Загрузка списка наборов...</div>';
-
-    try {
-        const indexUrl = `https://raw.githubusercontent.com/${REPO_PATH}/main/word-sets/index.json`;
-        const response = await fetch(indexUrl);
-        
-        if (!response.ok) {
-            throw new Error('Не удалось загрузить index.json');
-        }
-        
-        const data = await response.json();
-        availableSets = data.sets || [];
-
-        if (availableSets.length === 0) {
-            container.innerHTML = '<div class="error-box">Наборы не найдены</div>';
-            return;
-        }
-
-        displaySets();
-        
-    } catch (e) {
-        container.innerHTML = `<div class="error-box">Ошибка загрузки: ${e.message}</div>`;
-    }
+    displaySets();
 }
 
 function displaySets() {
     const container = document.getElementById('setsContainer');
     const loadedSets = loadLoadedSets();
+    
+    if (!availableSets || availableSets.length === 0) {
+        container.innerHTML = '<div class="error-box">Наборы не найдены. Проверьте подключение к интернету.</div>';
+        return;
+    }
+    
     container.innerHTML = '<h3>Доступные наборы</h3>';
 
     availableSets.forEach(set => {
@@ -62,6 +47,7 @@ function displaySets() {
         container.appendChild(setCard);
     });
 }
+
 
 async function loadSet(filename, setName) {
     try {
