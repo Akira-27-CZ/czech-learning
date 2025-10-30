@@ -51,7 +51,7 @@ function displaySets() {
 
 async function loadSet(filename, setName) {
     try {
-        const url = `https://raw.githubusercontent.com/${REPO_PATH}/main/word-sets/${filename}`;
+        const url = `https://raw.githubusercontent.com/${REPO_PATH}/Divided/word-sets/${filename}`;
         const response = await fetch(url);
         
         if (!response.ok) throw new Error('Не удалось загрузить набор');
@@ -102,7 +102,7 @@ async function reloadSet(filename, setName) {
     }
 
     try {
-        const url = `https://raw.githubusercontent.com/${REPO_PATH}/main/word-sets/${filename}`;
+        const url = `https://raw.githubusercontent.com/${REPO_PATH}/Divided/word-sets/${filename}`;
         const response = await fetch(url);
         
         if (!response.ok) throw new Error('Не удалось загрузить набор');
