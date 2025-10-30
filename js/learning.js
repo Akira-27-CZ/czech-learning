@@ -5,22 +5,21 @@ const czechLetters = 'aábcčdďeéěfghiíjklmnňoópqrřsštťuúůvwxyýzž'.
 let sessionWords = [];
 let sessionStats = { correct: 0, incorrect: 0 };
 let currentQuestion = null;
-let sessionParams = null;
 let returnScreenFromParams = 'setSelectorScreen';
 
 function startSessionFromPreview() {
     if (!window.currentPreviewSet) return;
     
-    sessionParams = {
+    window.sessionParams = {
         setName: window.currentPreviewSet,
         isRandom: false
     };
-    returnScreenFromParams = 'setPreviewScreen';
+    window.returnScreenFromParams = 'setPreviewScreen';
     showScreen('sessionParamsScreen');
 }
 
 function returnFromSessionParams() {
-    showScreen(returnScreenFromParams);
+    showScreen(window.returnScreenFromParams || 'setSelectorScreen');
 }
 
 function startSessionWithParams() {
@@ -30,10 +29,10 @@ function startSessionWithParams() {
     const words = loadWords();
     let availableWords = [];
     
-    if (sessionParams.isRandom) {
+    if (window.sessionParams.isRandom) {
         availableWords = [...words];
     } else {
-        availableWords = words.filter(w => w.setName === sessionParams.setName);
+        availableWords = words.filter(w => w.setName === window.sessionParams.setName);
     }
     
     if (availableWords.length === 0) {
