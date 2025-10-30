@@ -111,7 +111,7 @@ async function loadSet(filename, setName) {
 }
 
 async function reloadSet(filename, setName) {
-    if (!confirm(`Обновить набор "${setName}"?\n\nСтарые слова из этого набора будут удалены.\nНовые слова будут загружены из файла.\nСтатистика обучения будет потеряна для этого набора.`)) {
+    if (!confirm(`Обновить набор "${setName}"?\n\nБудут добавлены новые слова и удалены отсутствующие.\nСтатистика существующих слов будет сохранена.`)) {
         return;
     }
 
@@ -128,29 +128,67 @@ async function reloadSet(filename, setName) {
         }
 
         let words = loadWords();
-        words = words.filter(w => w.setName !== setName);
-
-        newWords.forEach(word => {
-            words.push({
-                cs: word.cs,
-                tr: word.tr || '',
-                ru: word.ru,
-                correct: 0,
-                incorrect: 0,
-                lastReview: null,
-                setName: setName
-            });
+        
+        // Находим все слова из этого набора
+        const oldSetWords = words.filter(w => w.setName === setName);
+        
+        // Слова из других наборов остаются нетронутыми
+        const otherWords = words.filter(w => w.setName !== setName);
+        
+        let addedCount = 0;
+        let updatedCount = 0;
+        let removedCount = 0;
+        
+        // Обрабатываем каждое слово из нового набора
+        const updatedSetWords = newWords.map(newWord => {
+            // Ищем это слово в старой версии набора
+            const existingWord = oldSetWords.find(w => 
+                w.cs === newWord.cs && w.ru === newWord.ru
+            );
+            
+            if (existingWord) {
+                // Слово существовало - сохраняем статистику, обновляем транскрипцию
+                updatedCount++;
+                return {
+                    ...existingWord,
+                    tr: newWord.tr || existingWord.tr || '' // обновляем транскрипцию если есть
+                };
+            } else {
+                // Новое слово - добавляем с нулевой статистикой
+                addedCount++;
+                return {
+                    cs: newWord.cs,
+                    tr: newWord.tr || '',
+                    ru: newWord.ru,
+                    correct: 0,
+                    incorrect: 0,
+                    lastReview: null,
+                    setName: setName
+                };
+            }
         });
+        
+        // Подсчитываем удалённые слова
+        removedCount = oldSetWords.length - updatedCount;
+
+        // Объединяем: слова из других наборов + обновлённые слова этого набора
+        words = [...otherWords, ...updatedSetWords];
 
         saveWords(words);
         displaySets();
         updateMainStats();
-        alert(`Набор "${setName}" обновлен!\nДобавлено новых слов: ${newWords.length}`);
+        
+        // Подробный отчёт об обновлении
+        let message = `Набор "${setName}" обновлён!\n\n`;
+        if (addedCount > 0) message += `✅ Добавлено новых слов: ${addedCount}\n`;
+        if (updatedCount > 0) message += `♻️ Сохранена статистика: ${updatedCount} слов\n`;
+        if (removedCount > 0) message += `🗑️ Удалено слов: ${removedCount}\n`;
+        
+        alert(message);
     } catch (e) {
         alert('Ошибка обновления набора: ' + e.message);
     }
 }
-
 function deleteSet(filename, setName) {
     if (!confirm(`Удалить набор "${setName}"?\n\nВсе слова из этого набора будут удалены.\nСтатистика обучения будет потеряна.\nЭто действие необратимо!`)) {
         return;
