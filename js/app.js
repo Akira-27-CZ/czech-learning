@@ -1,5 +1,9 @@
 // app.js - Главный файл приложения
 
+// Глобальные переменные
+window.sessionParams = null;
+window.returnScreenFromParams = 'setSelectorScreen';
+
 function init() {
     updateMainStats();
 }
