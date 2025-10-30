@@ -14,14 +14,14 @@ function displaySets() {
     const container = document.getElementById('setsContainer');
     const loadedSets = loadLoadedSets();
     
-    if (!availableSets || availableSets.length === 0) {
+    if (!window.availableSets || window.availableSets.length === 0) {
         container.innerHTML = '<div class="error-box">Наборы не найдены. Проверьте подключение к интернету.</div>';
         return;
     }
     
     container.innerHTML = '<h3>Доступные наборы</h3>';
 
-    availableSets.forEach(set => {
+    window.availableSets.forEach(set => {
         const isLoaded = loadedSets.includes(set.file);
         
         const setCard = document.createElement('div');
