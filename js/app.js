@@ -13,7 +13,7 @@ function init() {
 // ДОБАВЬ ЭТУ ФУНКЦИЮ
 async function loadSetsIndex() {
     try {
-        const indexUrl = `https://raw.githubusercontent.com/Akira-27-CZ/czech-learning/main/word-sets/index.json`;
+        const indexUrl = `https://raw.githubusercontent.com/Akira-27-CZ/czech-learning/Divided/word-sets/index.json`;
         const response = await fetch(indexUrl);
         
         if (response.ok) {
