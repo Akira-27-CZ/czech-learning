@@ -3,14 +3,14 @@
 // Глобальные переменные
 window.sessionParams = null;
 window.returnScreenFromParams = 'setSelectorScreen';
+window.availableSets = []; // <-- ДОБАВЬ ЭТУ СТРОКУ
 
 function init() {
     updateMainStats();
-    // Загружаем список наборов при старте приложения
-    loadSetsIndex();
+    loadSetsIndex(); // <-- ДОБАВЬ ЭТУ СТРОКУ
 }
 
-// Загружаем только данные о наборах (без отображения)
+// ДОБАВЬ ЭТУ ФУНКЦИЮ
 async function loadSetsIndex() {
     try {
         const indexUrl = `https://raw.githubusercontent.com/Akira-27-CZ/czech-learning/main/word-sets/index.json`;
@@ -18,7 +18,8 @@ async function loadSetsIndex() {
         
         if (response.ok) {
             const data = await response.json();
-            availableSets = data.sets || [];
+            window.availableSets = data.sets || [];
+            console.log('Загружено наборов:', window.availableSets.length); // для отладки
         }
     } catch (e) {
         console.error('Не удалось загрузить список наборов:', e);
@@ -38,8 +39,7 @@ function showScreen(screenId) {
         updateMainStats();
     }
     if (screenId === 'setsScreen') {
-        // Теперь только отображаем наборы (данные уже загружены)
-        displaySets();
+        displaySets(); // <-- ИЗМЕНЕНО: теперь только отображение
     }
 }
 
